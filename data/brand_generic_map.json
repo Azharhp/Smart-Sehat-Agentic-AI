@@ -32,4 +32,7 @@
    "drug_class": "analgesic-antipyretic", "pregnancy_category": "B"},
   {"brands": ["Rifadin", "Rimactazid"], "generic": "rifampicin",
    "drug_class": "antimycobacterial", "pregnancy_category": "C"}
+  {"brands": ["Ciproxin", "Ciprofox"], "generic": "ciprofloxacin",
+   "drug_class": "fluoroquinolone-antibiotic", "pregnancy_category": "C",
+   "notes": "NIH: XDR S. Typhi resistant to fluoroquinolones"}
 ]
