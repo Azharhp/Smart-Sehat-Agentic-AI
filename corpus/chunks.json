@@ -1,0 +1,137 @@
+[
+  {
+    "id": "WHO_TB_M2_4symptom_screen",
+    "source": "WHO consolidated guidelines on tuberculosis. Module 2: Screening — systematic screening for tuberculosis disease (2021), Executive Summary, Recommendation 11, p.xxii",
+    "text": "Among adults and adolescents living with HIV, systematic screening for TB disease should be conducted using the WHO-recommended four symptom screen and those who report any one of the symptoms of current cough, fever, weight loss or night sweats may have TB and should be evaluated for TB and other diseases (existing recommendation: strong recommendation, moderate certainty of evidence)."
+  },
+  {
+    "id": "WHO_TB_M2_general_pop_screen",
+    "source": "WHO consolidated guidelines on tuberculosis. Module 2: Screening — systematic screening for tuberculosis disease (2021), Executive Summary, Recommendation 1, p.xxi",
+    "text": "Systematic screening for TB disease may be conducted among the general population in areas with an estimated TB prevalence of 0.5% or higher (updated recommendation: conditional recommendation, low certainty of evidence)."
+  },
+  {
+    "id": "WHO_TB_M2_child_contact_screen",
+    "source": "WHO consolidated guidelines on tuberculosis. Module 2: Screening — systematic screening for tuberculosis disease (2021), Section 3.4, Recommendation 16",
+    "text": "Among individuals younger than 15 years who are close contacts of someone with TB, systematic screening for TB disease should be conducted using a symptom screen including any one of cough, fever or poor weight gain; or chest radiography; or both (new recommendation: strong recommendation, moderate to low certainty of evidence for test accuracy)."
+  },
+  {
+    "id": "WHO_TB_M4_DSTB_regimen",
+    "source": "WHO TB Knowledge Sharing Platform, Section 3.4.1 — WHO-recommended treatment regimens for adults with drug-susceptible TB (mirrors WHO consolidated guidelines on tuberculosis. Module 4: Treatment — drug-susceptible tuberculosis treatment, 2022)",
+    "text": "WHO currently recommends two treatment regimens for adults with drug-susceptible TB (DS-TB): a 6-month regimen composed of 2 months of isoniazid (H), rifampicin (R), pyrazinamide (Z) and ethambutol (E), followed by 4 months of isoniazid and rifampicin (2HRZE/4HR) and a 4-month regimen composed of 8 weeks of isoniazid, rifapentine (P), moxifloxacin (M) and pyrazinamide, followed by 9 weeks of daily isoniazid, rifapentine, and moxifloxacin (2HPMZ/2HPM)."
+  },
+  {
+    "id": "WHO_EML_amoxicillin",
+    "source": "WHO Model List of Essential Medicines — 24th List (2025), Section 6.2.1 Beta lactam medicines, amoxicillin entry, p.11",
+    "text": "amoxicillin — Powder for oral liquid: 125 mg/5 mL; 250 mg/5 mL (as trihydrate) [c]. Solid oral dosage form: 250 mg; 500 mg; 1 g (as trihydrate). Tablet (dispersible, scored): 250 mg; 500 mg (as trihydrate) [c]. First choice for: Community acquired pneumonia (mild to moderate); Community acquired pneumonia (severe) [c]; Complicated severe acute malnutrition [c]; Exacerbations of COPD; Otitis media; Pharyngitis; Progressive apical dental abscess; Sepsis in neonates and children [c]; Sinusitis; Uncomplicated severe acute malnutrition [c]. Second choice for: Acute bacterial meningitis."
+  },
+  {
+    "id": "WHO_EML_TB_medicines",
+    "source": "WHO Model List of Essential Medicines — 24th List (2025), Section 6.2.5 Antituberculosis medicines, p.18",
+    "text": "ethambutol — Tablet: 100 mg; 400 mg (hydrochloride). Tablet (dispersible): 100 mg [c]. isoniazid — Tablet: 100 mg; 300 mg. Tablet (dispersible, scored): 100 mg [c]. pyrazinamide — Tablet: 400 mg; 500 mg. Tablet (dispersible): 150 mg. rifampicin — Oral liquid: 20 mg/mL [c]. Solid oral dosage form: 150 mg; 300 mg. ethambutol + isoniazid + pyrazinamide + rifampicin — Tablet: 275 mg + 75 mg + 400 mg + 150 mg. ethambutol + isoniazid + rifampicin — Tablet: 275 mg + 75 mg + 150 mg. WHO recommends and endorses the use of fixed-dose combinations and the development of appropriate new fixed-dose combinations, including modified dosage forms, non-refrigerated products and paediatric dosage forms of assured pharmaceutical quality."
+  },
+  {
+    "id": "WHO_MAL_ACT_recommendation",
+    "source": "WHO Guidelines for malaria, 14 March 2023, Section 5.2.1.1 Artemisinin-based combination therapy, p.19",
+    "text": "Children and adults with uncomplicated P. falciparum malaria should be treated with one of the following ACTs: artemether-lumefantrine (AL); artesunate-amodiaquine (AS+AQ); artesunate-mefloquine (ASMQ); dihydroartemisinin-piperaquine (DHAP); artesunate + sulfadoxine-pyrimethamine (AS+SP); artesunate-pyronaridine (ASPY) (2022). Duration of ACT treatment (2015): ACT regimens should provide 3 days' treatment with an artemisinin derivative."
+  },
+  {
+    "id": "WHO_MAL_pregnancy_AL",
+    "source": "WHO Guidelines for malaria, 14 March 2023, Section 5.2.1.4.1 Pregnant and lactating women, p.20",
+    "text": "Treatment in the first trimester of pregnancy (2022): Pregnant women with uncomplicated P. falciparum malaria should be treated with artemether-lumefantrine during the first trimester."
+  },
+  {
+    "id": "WHO_EML_AL_form",
+    "source": "WHO Model List of Essential Medicines — 24th List (2025), Section 6.5.3.1 Medicines for curative treatment, artemether + lumefantrine entry, p.24",
+    "text": "artemether + lumefantrine — Tablet: 20 mg + 120 mg. Tablet (dispersible): 20 mg + 120 mg [c]. Medicines for the treatment of P. falciparum malaria cases should be used in combination. The list currently recommends combinations according to WHO treatment guidelines for malaria."
+  },
+  {
+    "id": "WHO_IMCI_amox_dosing",
+    "source": "WHO. Revised WHO classification and treatment of childhood pneumonia at health facilities — Quick Reference Guide (2014), Table: Doses of amoxicillin for children 2–59 months of age with pneumonia",
+    "text": "Fast breathing pneumonia (community management): 2 months up to 12 months (4–<10 kg): 1 tab twice a day x 5 days (10 tabs); 12 months up to 5 years (10–19 kg): 2 tabs twice a day x 5 days (20 tabs). Fast breathing and chest indrawing pneumonia (IMCI at health facility): 2 months up to 12 months (4–<10 kg): 1 tab twice a day x 5 days (10 tabs); 12 months up to 3 years (10–<14 kg): 2 tabs twice a day x 5 days (20 tabs); 3 years up to 5 years (14–19 kg): 3 tabs twice a day x 5 days (30 tabs). Dosage of amoxicillin dispersible tablets (250 mg). Oral amoxicillin is the most effective treatment for both fast breathing and chest indrawing pneumonia."
+  },
+  {
+    "id": "NTP_PK_2019_pulmonary_symptoms",
+    "source": "National Guidelines for the Control of Tuberculosis in Pakistan (Revised 2019), Ministry of National Health Services, Regulations & Coordination, Government of Pakistan, Ch. 3.2 Signs and Symptoms, p.16",
+    "text": "TB bacteria usually grow in the lungs (pulmonary TB). TB disease in the lungs may cause symptoms such as: cough more than two or more weeks, or of any duration with following symptoms; pain in the chest; coughing up blood or sputum (phlegm from deep inside the lungs). Other symptoms of TB disease are: weakness or fatigue; weight loss; reduced appetite; chills; fever; sweating at night."
+  },
+  {
+    "id": "NTP_PK_2019_burden",
+    "source": "National Guidelines for the Control of Tuberculosis in Pakistan (Revised 2019), Ch. 1, p.3-4",
+    "text": "TB is one of the major public health problems in Pakistan, with the country ranking fifth among TB high-burden countries worldwide. Pakistan ranks 5th among 30 high-burden countries for TB and 5th for Drug Resistant TB (DR-TB). Estimated TB incidence and prevalence is respectively 267 and 341/100K with an estimated 525,000 new TB cases each year."
+  },
+  {
+    "id": "NTP_PK_2019_free_care",
+    "source": "National Guidelines for the Control of Tuberculosis in Pakistan (Revised 2019), Foreword",
+    "text": "The provision of free of cost quality TB care to all who need is the prime objective of National TB Control program. TB control Programme has treated nearly 4 million people with quality assured drugs since its revival while maintaining the treatment success rate of more than 90%."
+  },
+  {
+    "id": "NTP_PK_2019_firstline_regimen",
+    "source": "National TB Guidelines Pakistan 2019, Ch. 2.2, WHO TB Standard 12 as incorporated, p.12",
+    "text": "While awaiting DST results, patients with drug-susceptible TB and TB patients who have not been treated previously with anti-TB agents and do not have other risk factors for drug resistance should receive a WHO recommended first-line treatment regimen using quality assured anti-TB agents. The initial phase should consist of 2 months of isoniazid, rifampicin, pyrazinamide and ethambutol. The continuation phase should consist of 4 months of isoniazid and rifampicin. Daily dosing should be used throughout treatment."
+  },
+  {
+    "id": "NTP_PK_2019_xpert_diagnosis",
+    "source": "National TB Guidelines Pakistan 2019, Ch. 2.2, WHO TB Standard 6 as incorporated, p.12",
+    "text": "All patients with signs and symptoms of pulmonary TB who are capable of producing sputum should have as their initial diagnostic test at least one sputum specimen submitted for Xpert MTB/RIF Ultra assay. This also includes children who are able to provide a sputum sample. A second Xpert MTB/RIF Ultra assay may be performed for all patients who initially test negative by Xpert MTB/RIF Ultra but whose signs and symptoms of TB persist."
+  },
+  {
+    "id": "NTP_PK_2019_cxr_role",
+    "source": "National TB Guidelines Pakistan 2019, Ch. 2.2, WHO TB Standard 4 as incorporated, p.11",
+    "text": "Chest radiography, or CXR, is an important tool for triaging and screening for pulmonary TB, and it is also useful to aid diagnosis when pulmonary TB cannot be confirmed bacteriologically. CXR can be used to select individuals for referral for bacteriological confirmation, and the role of radiology remains important when bacteriological tests cannot provide a clear answer."
+  },
+  {
+    "id": "NTP_PK_2019_prompt_evaluation",
+    "source": "National TB Guidelines Pakistan 2019, Ch. 2.2, WHO TB Standard 1 as incorporated, p.11",
+    "text": "For persons with signs or symptoms consistent with TB, performing prompt clinical evaluation is essential to ensure early and rapid diagnosis. All persons who have been in close contact with patients who have pulmonary TB should be evaluated."
+  },
+  {
+    "id": "NTP_PK_2019_notification",
+    "source": "National TB Guidelines Pakistan 2019, Ch. 2.2, WHO TB Standard 27 as incorporated, p.13",
+    "text": "All providers must report both new and re-treatment TB cases and their treatment outcomes to national public health authorities in conformance with applicable legal requirements and policies; TB mortality should be monitored by using standard cause-of-death data from vital registration systems."
+  },
+  {
+    "id": "NEML_PK_2023_notification",
+    "source": "Gazette of Pakistan (Extraordinary), Part II, S.R.O. 1423(I)/2023, 16 October 2023 — Drug Regulatory Authority of Pakistan",
+    "text": "S. R. O. 1423(I)/2023. For the purpose of clause (xi) of sub-paragraph (1) of paragraph 2 of the Drug Pricing Policy, 2018 the Ministry of National Health Services, Regulations and Coordination is hereby pleased to notify the Model List of Essential Medicines 23rd List (2023) published by the World Health Organization."
+  },
+  {
+    "id": "NEML_PK_2023_artemether_lumefantrine",
+    "source": "NEML Pakistan 2023 (Gazette of Pakistan, S.R.O. 1423(I)/2023), Section 6.5.3.1, p.3181(25)",
+    "text": "artemether + lumefantrine. Tablet 20 mg + 120 mg. Tablet (dispersible): 20 mg + 120 mg [c]. Not recommended in the first trimester of pregnancy or in children below 5 kg."
+  },
+  {
+    "id": "NEML_PK_2023_amoxicillin",
+    "source": "NEML Pakistan 2023 (Gazette of Pakistan, S.R.O. 1423(I)/2023), Section 6.2.1 Access group antibiotics, p.3181(11)",
+    "text": "amoxicillin. Powder for injection: 250 mg; 500 mg; 1 g (as sodium) in vial. Powder for oral liquid: 125 mg/5 mL; 250 mg/5 mL (as trihydrate) [c]. Solid oral dosage form: 250 mg; 500 mg; 1 g (as trihydrate). Tablet (dispersible, scored): 250 mg; 500 mg (as trihydrate) [c]. FIRST CHOICE indications include community-acquired pneumonia (mild to moderate), community-acquired pneumonia (severe) [c], and sepsis in neonates and children [c]."
+  },
+  {
+    "id": "NEML_PK_2023_azithromycin",
+    "source": "NEML Pakistan 2023 (Gazette of Pakistan, S.R.O. 1423(I)/2023), Section 6.2.2 Watch group macrolides, p.3181(15)",
+    "text": "azithromycin. Solid oral dosage form: 250 mg; 500 mg (anhydrous). Powder for oral liquid: 200 mg/5 mL (anhydrous) [c]. FIRST CHOICE indications include: cholera; enteric fever; gonorrhoea; sexually transmitted infections due to Chlamydia trachomatis; trachoma; yaws. SECOND CHOICE: acute invasive bacterial diarrhoea / dysentery; pneumonia."
+  },
+  {
+    "id": "NEML_PK_2023_tb_medicines",
+    "source": "NEML Pakistan 2023 (Gazette of Pakistan, S.R.O. 1423(I)/2023), Section 6.2.3 Antituberculosis medicines, p.3181(17)",
+    "text": "rifampicin — Oral liquid 20 mg/mL [c]; solid oral dosage form 150 mg; 300 mg. isoniazid — tablet 100 mg; 300 mg. pyrazinamide — tablet 400 mg; 500 mg; tablet (dispersible) 150 mg. ethambutol — tablet 100 mg; 400 mg (hydrochloride); tablet (dispersible) 100 mg [c]. Fixed-dose combinations listed include ethambutol + isoniazid + pyrazinamide + rifampicin."
+  },
+  {
+    "id": "NIH_XDR_typhoid_2024_resistance",
+    "source": "NIH Pakistan Advisory No. F.1-22/Advisory/CDC/2024 (22 May 2024), Advisory for Prevention and Treatment of Typhoid Fever including XDR Typhoid, via Public Health Bulletin Pakistan W22-2024",
+    "text": "Cases of Extensively Drug Resistant Salmonella Typhi (XDR S. Typhi) in the country have been reported since 2016 from different parts of the country, especially during summer and monsoon season. This XDR S. Typhi is resistant to commonly used antibiotics such as ampicillin, chloramphenicol, trimethoprim-sulfamethoxazole, fluoroquinolones and third generation cephalosporins. The XDR S. Typhi is sensitive only to carbapenem (Meropenem) and macrolide (azithromycin)."
+  },
+  {
+    "id": "NIH_XDR_typhoid_2024_stewardship",
+    "source": "NIH Pakistan Advisory No. F.1-22/Advisory/CDC/2024 (22 May 2024), Treatment section",
+    "text": "Use of Azithromycin and Meropenem should be restricted and only be given to XDR cases of typhoid fever based on prescription by registered medical practitioner. In case of other infections such as upper and lower respiratory tract infections, other available drug options should be used instead of oral azithromycin which should be spared/ reserved for lab confirmed XDR Typhoid cases and other serious medical conditions."
+  },
+  {
+    "id": "NIH_typhoid_case_defn_diagnosis",
+    "source": "NIH Pakistan Advisory No. F.1-22/Advisory/CDC/2024 (22 May 2024), Case Definition & Diagnosis sections",
+    "text": "Suspected Case: Any person with a history of fever of at least 38°C for 3 or more days with abdominal symptoms like diarrhea or constipation, abdominal tenderness, and prostration. Widal and Typhidot have No diagnostic value due to limited sensitivity, specificity and cross reactivity and must be stopped immediately by all labs. Patients with typhoid typically have bacteremia; blood culture is therefore the preferred method of diagnosis."
+  },
+  {
+    "id": "NIH_typhoid_prevention_vaccination",
+    "source": "NIH Pakistan Advisory No. F.1-22/Advisory/CDC/2024 (22 May 2024), Preventive measures and Vaccination section",
+    "text": "Vaccination is recommended for all age groups especially high-risk group of people and those who are exposed to the disease. Typhoid fever vaccines do not provide 100% protection however they will reduce the severity of the illness. Typhoid conjugate vaccine (Typbar-TCV) is a new conjugate vaccine with longer immunity. WHO has prequalified the first conjugate vaccine in December 2017 to prevent typhoid fever."
+  }
+]
