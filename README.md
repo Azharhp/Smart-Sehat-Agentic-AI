@@ -1,108 +1,113 @@
-# SmartSehat — Day 2: Real Intelligence
+# SmartSehat — Day 4: District Dashboard
 
-A LangGraph-orchestrated clinical AI assistant for rural health units (BHUs)
-in Pakistan. **Day 2 makes the agents real** on top of the Day-1 skeleton:
-the ModelRouter now actually calls Groq / Gemini / Qwen, the corpus is
-seeded with verbatim WHO / EML / IMCI guideline text, and every agent honours
-a `agents:` config switch so the offline test suite stays deterministic and
-green.
+SmartSehat is a clinical AI assistant for BHU-level health workers in rural
+Pakistan. It uses a LangGraph-based agent pipeline with deterministic-first
+triage and human-in-the-loop (HITL) gates to support safe, auditable
+clinical workflows.
 
-## What's new in Day 2
+## Three Views
 
-- **Real STT, structured extraction, vision, and RAG-grounded reasoning** —
-  gated behind `agents: real` in `config.yaml`; `agents: stub` (default)
-  preserves Day-1 offline behaviour.
-- **Voice pipeline split** — `stt_node` → **transcript_gate** (HITL
-  paramedic review, editable) → `structure_node` (JSON extraction).
-- **Deterministic triage rules** (`smartsehat/rules_triage.py`) — RED / YELLOW
-  / GREEN by keyword matching on English + roman-Urdu variants. Never an
-  LLM (safety law). Preserves the `force_triage` override hook.
-- **Vision route** — `ModelRouter.route_vision(role, image_path, prompt)`
-  with Qwen (VL) primary and Gemini (multimodal) fallback; Groq raises.
-- **Clinical corpus** (`corpus/chunks.json`, `corpus/PROVENANCE.md`) —
-  verbatim WHO TB screening + treatment, WHO EML entries for amoxicillin,
-  TB medicines, artemether-lumefantrine, WHO malaria ACT recommendation,
-  IMCI amoxicillin dosing. Pakistan-specific NEML / NTP chunks are
-  clearly marked `NOT_RETRIEVED` because those government sites were not
-  reachable from this sandbox.
-- **Citation gate (warn mode)** — the reasoning agent's DDX citations are
-  validated against `corpus.get_chunk_map()`; off-allowlist medicines are
-  flagged; the model is re-prompted once; on failure invalid citations are
-  stripped and confidence is reduced by 0.1, all recorded in the event
-  ledger.
-- **Explicit degraded mode** — when a router call raises (all providers
-  fail), the reasoning agent logs `REASONING_DEGRADED` and returns
-  `{"ddx":[], "confidence":0, "degraded":"reasoning_unavailable"}`;
-  the UI surfaces the warning.
-- **Streamlit UI** — audio + image uploaders, a dedicated transcript
-  confirmation screen, HITL card with triage badge / DDX / citations /
-  degraded-mode warning.
-- **Tests** — `test_flow.py` (offline, stub) grows to **29 assertions**
-  covering the new voice pipeline and every Day-1 safety invariant;
-  `test_real.py` runs live against real APIs when keys + `agents: real`
-  are set, and **SKIPS cleanly** otherwise.
+### Consultation
 
-## Run
+Voice intake with Urdu ASR feeds deterministic triage in `rules_triage.py`,
+followed by AI-assisted clinical reasoning with citations and X-ray pattern
+detection. A health worker must approve, modify, or reject recommendations
+through a HITL gate. RED cases produce emergency dispatch packets, while an
+asynchronous doctor review loop supports telemedicine follow-up through
+WhatsApp.
+
+### Dawa Check
+
+A prescription or medicine-bag photo is processed through OCR extraction
+and checked for pregnancy risks, duplicate drug classes, drug-drug
+interactions (DDIs), and antibiotic stewardship concerns. Results appear
+in a traffic-light safety grid for health worker review, including the
+ability to dismiss individual flags with an auditable rationale.
+
+### District View
+
+The District Health Officer receives a read-only dashboard backed by the
+immutable event ledger. It provides KPIs, cases per BHU, top diagnoses,
+HITL oversight with rubber-stamp and high-override flags, syndromic trend
+charts with automated outbreak alerts, and a facility map.
+
+## Quick Start
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate         # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-python seed.py                    # seed BHU-0442 + PM-2213 + PT-0001
-python test_flow.py               # 29/29 PASS, offline
-
-streamlit run smartsehat/app.py   # UI with audio/image uploads + HITL
+python seed.py
+python seed_district.py
+python -m streamlit run smartsehat/app.py
 ```
 
-## Switching to real mode
+## Tests
 
-1. Put keys in `.env` at repo root:
-   ```
-   GROQ_API_KEY=...
-   GOOGLE_API_KEY=...
-   DASHSCOPE_API_KEY=...
-   ```
-   `router.py` calls `load_dotenv()` at import time — no manual export needed.
-2. Flip `config.yaml`:
-   ```yaml
-   agents: real
-   ```
-3. `python test_real.py` — TB-audio + X-ray scenario + prescription-image
-   vision call. Skips with a clear message when either keys or config are
-   not real-mode ready.
+```bash
+python test_flow.py     # 34/34 — consultation pipeline
+python test_dawa.py     # 24/24 — dawa check pipeline
+```
 
-## Corpus honesty
+## Agent Modes
 
-`corpus/PROVENANCE.md` is the audit trail. Every chunk records document
-title, section / page, retrieval URL, and retrieval method. Chunks that
-could not be retrieved verbatim carry `"text": "NOT_RETRIEVED"` and a
-sentence naming the fallback in use — nothing was invented or paraphrased.
+Set `agents` in `config.yaml`:
+
+- `agents: stub` — deterministic operation with no API keys required.
+- `agents: real` — live model providers; add `GROQ_API_KEY`,
+  `GOOGLE_API_KEY`, and `DASHSCOPE_API_KEY` to `.env` (gitignored —
+  keys never enter the repository).
+
+## Model Routes (bake-off winners)
+
+Selected by a 60-call live bake-off across Google, Alibaba, and Groq:
+
+- STT: `gemini-3.6-flash` primary → `qwen3-asr-flash` fallback
+- Vision (X-ray + prescriptions): `qwen3-vl-plus` primary → `gemini-3.6-flash` fallback
+- Reasoning: `gpt-oss-120b` (Groq) primary → `qwen3-max` fallback
+
+All inference flows through a provider-agnostic router with automatic
+failover and 503-transient retry — demonstrated live when a provider
+outage occurred mid-build and the consultation completed uninterrupted.
+
+## Clinical Corpus
+
+`corpus/chunks.json` holds 27 verbatim, provenance-tracked passages:
+10 WHO + 17 Pakistani government sources (National TB Control Programme
+guidelines 2019, the NEML Gazette of Pakistan S.R.O. 1423(I)/2023, and
+the NIH XDR-typhoid advisory 2024). Every AI citation is mechanically
+validated against this corpus; citations that don't resolve are stripped.
+See `corpus/PROVENANCE.md` for the document-level audit trail.
 
 ## Layout
 
+```text
+smartsehat/
+  app.py          — Streamlit UI (3 tabs)
+  graph.py        — consultation LangGraph
+  dawa_graph.py   — dawa check LangGraph
+  dash.py         — district dashboard (read-only)
+  agents.py       — stub/real agent implementations
+  audit.py        — append-only SQLite ledger
+  router.py       — model router + provider health
+  rules_triage.py — deterministic triage rules
+  corpus.py       — RAG corpus loader
+  state.py        — PatientState TypedDict
+data/brand_generic_map.json — Pakistani brand→generic map
+corpus/chunks.json           — 27-chunk clinical corpus
+seed.py           — baseline seed (1 facility, 1 user, 1 patient)
+seed_district.py  — synthetic demo month (150 cases, 4 BHUs, labeled)
+test_flow.py      — consultation tests (34)
+test_dawa.py      — dawa check tests (24)
+test_real.py      — live API integration test (skips without keys)
 ```
-smartsehat_project/
-├── README.md
-├── requirements.txt
-├── config.yaml                    # agents: stub|real switch + role_routes
-├── seed.py
-├── test_flow.py                   # offline stub test — 29/29 PASS
-├── test_real.py                   # real-mode integration test (skips w/o keys)
-├── corpus/
-│   ├── chunks.json                # verbatim clinical passages, stable ids
-│   └── PROVENANCE.md              # source + retrieval audit trail
-├── assets/                        # demo audio / xray / rx images
-└── smartsehat/
-    ├── __init__.py
-    ├── router.py                  # ModelRouter + generate/transcribe/vision
-    ├── audit.py                   # append-only SQLite ledger
-    ├── state.py                   # PatientState TypedDict
-    ├── corpus.py                  # load_chunks / retrieve (keyword-overlap)
-    ├── rules_triage.py            # deterministic triage rules
-    ├── agents.py                  # stt / transcript_gate / structure /
-    │                              #  triage / vision / reasoning / pharm /
-    │                              #  emergency / finalize
-    ├── graph.py                   # LangGraph topology + HITL interrupts
-    └── app.py                     # Streamlit UI
-```
+
+## What's Verified
+
+- 34 automated checks on the consultation pipeline: triage (English/Urdu/
+  Devanagari scripts), reasoning citations, HITL gates, emergency dispatch,
+  and the doctor review loop.
+- 24 automated checks on the dawa pipeline: drug flags, dismiss flow,
+  finalization, and ledger audit.
+- 7 live API integration checks (STT, vision, cited reasoning,
+  prescription OCR at 6/6).
+- The district dashboard renders from the same immutable ledger; every
+  number is a query over append-only events.

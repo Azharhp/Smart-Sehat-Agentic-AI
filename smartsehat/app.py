@@ -192,7 +192,7 @@ def _sidebar() -> tuple[str, str]:
     paramedic_id = st.sidebar.text_input("Health worker ID", value="PM-2213")
     st.sidebar.divider()
     workflow = st.sidebar.radio("Workflow",
-                                ["Consultation", "Dawa Check"], index=0)
+                                ["Consultation", "Dawa Check", "District View"], index=0)
     st.session_state["_workflow"] = workflow
     return patient_id, paramedic_id
 
@@ -395,6 +395,10 @@ def main() -> None:
     workflow = st.session_state.get("_workflow", "Consultation")
     if workflow == "Dawa Check":
         _dawa_tab(paramedic_id)
+        return
+    if workflow == "District View":
+        from smartsehat.dash import render as render_dash
+        render_dash()
         return
     st.title("SmartSehat — one patient, one journey")
 
