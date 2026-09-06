@@ -5,6 +5,14 @@ from __future__ import annotations
 import base64
 import json
 import os
+import unittest
+
+if __name__ != "__main__":
+    raise unittest.SkipTest("live provider probe is excluded from test discovery")
+
+if os.getenv("SMARTSEHAT_RUN_LIVE") != "1":
+    print("[SKIP] Set SMARTSEHAT_RUN_LIVE=1 to opt into this paid live-provider probe.")
+    raise SystemExit(0)
 
 from dotenv import load_dotenv
 

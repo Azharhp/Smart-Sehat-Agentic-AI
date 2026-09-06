@@ -1,4 +1,4 @@
-# SmartSehat — Day 4: District Dashboard
+# SmartSehat — Consultation, Dawa Check, and District Dashboard
 
 SmartSehat is a clinical AI assistant for BHU-level health workers in rural
 Pakistan. It uses a LangGraph-based agent pipeline with deterministic-first
@@ -11,18 +11,28 @@ clinical workflows.
 
 Voice intake with Urdu ASR feeds deterministic triage in `rules_triage.py`,
 followed by AI-assisted clinical reasoning with citations and X-ray pattern
-detection. A health worker must approve, modify, or reject recommendations
-through a HITL gate. RED cases produce emergency dispatch packets, while an
+detection. Every structured medicine proposal is evaluated by the same bounded,
+source-linked rules used by Dawa Check; edits invalidate the prior receipt and
+run the review again. A health worker must approve, modify, or reject the plan.
+RED cases produce referral packets without invented drug orders, while an
 asynchronous doctor review loop supports telemedicine follow-up through
 WhatsApp.
 
 ### Dawa Check
 
-A prescription or medicine-bag photo is processed through OCR extraction
-and checked for pregnancy risks, duplicate drug classes, drug-drug
-interactions (DDIs), and antibiotic stewardship concerns. Results appear
-in a traffic-light safety grid for health worker review, including the
-ability to dismiss individual flags with an auditable rationale.
+A prescription or medicine-bag photo is processed through confirmed extraction
+and a finite shared review of product identity, selected interactions,
+ingredient duplication, adult oral paracetamol ceilings, selected pregnancy
+NSAID timing, allergy reconciliation, formulary scope, and antibiotic
+stewardship. Findings cannot be dismissed or turned green; review/referral notes
+preserve the original result and its evidence link.
+
+Both clinical workflows now create an owned encounter before any media is
+stored. The encounter freezes the registered patient or explicit walk-in
+reference, authenticated actor, facility, workflow, status, and versioned
+patient-context snapshot. Uploaded WAV/JPEG/PNG content is validated from its
+bytes, stored under an immutable media ID in a private case directory, and
+authorized through the encounter rather than exposed as a caller-supplied path.
 
 ### District View
 
@@ -40,18 +50,40 @@ python seed_district.py
 python -m streamlit run smartsehat/app.py
 ```
 
+For a guaranteed local demonstration with external providers disabled:
+
+```bash
+set SMARTSEHAT_OFFLINE=1
+set SMARTSEHAT_AUTH_MODE=demo
+set DOTENV_DISABLED=1
+python -m streamlit run smartsehat/app.py
+```
+
+The demo account selector is explicitly a local development identity provider.
+It is not production authentication. Set `SMARTSEHAT_AUTH_MODE=production` to
+fail closed until a production identity provider is implemented. Worker,
+doctor/clinical-reviewer, and DHO permissions are checked in the service layer,
+including facility ownership for patients, encounters, media, resume, mutation,
+and export access.
+
+Runtime media defaults to `runtime/private-media` (gitignored). Override it with
+`SMARTSEHAT_MEDIA_ROOT`; the default size limit is 10 MiB and can be changed with
+`SMARTSEHAT_MAX_UPLOAD_BYTES`.
+
 ## Tests
 
 ```bash
-python test_flow.py     # 34/34 — consultation pipeline
-python test_dawa.py     # 24/24 — dawa check pipeline
+python -m unittest discover -v  # 111 discovered: 110 pass, 1 live probe skipped
+python test_flow.py             # 35 consultation workflow checks
+python test_dawa.py             # 45 medication/Dawa checks
+python demo_medication_review.py
 ```
 
 ## Agent Modes
 
 Set `agents` in `config.yaml`:
 
-- `agents: stub` — deterministic operation with no API keys required.
+- `agents: stub` — deterministic/manual demo operation with provider routing blocked.
 - `agents: real` — live model providers; add `GROQ_API_KEY`,
   `GOOGLE_API_KEY`, and `DASHSCOPE_API_KEY` to `.env` (gitignored —
   keys never enter the repository).
@@ -84,9 +116,18 @@ smartsehat/
   app.py          — Streamlit UI (3 tabs)
   graph.py        — consultation LangGraph
   dawa_graph.py   — dawa check LangGraph
+  medication_review.py — shared finite medication review rules
+  medication_ui.py — shared structured medicine/context UI
+  emergency.py    — single emergency referral output source
   dash.py         — district dashboard (read-only)
   agents.py       — stub/real agent implementations
   audit.py        — append-only SQLite ledger
+  migrations.py   — additive, versioned SQLite migration runner
+  domain.py       — typed actor, patient snapshot, and encounter contracts
+  auth.py         — authentication provider abstraction and demo provider
+  access.py       — service-layer authorization and encounter ownership
+  media.py        — validated private immutable media repository
+  ui_state.py     — encounter-keyed UI state isolation
   router.py       — model router + provider health
   rules_triage.py — deterministic triage rules
   corpus.py       — RAG corpus loader
@@ -95,19 +136,23 @@ data/brand_generic_map.json — Pakistani brand→generic map
 corpus/chunks.json           — 27-chunk clinical corpus
 seed.py           — baseline seed (1 facility, 1 user, 1 patient)
 seed_district.py  — synthetic demo month (150 cases, 4 BHUs, labeled)
-test_flow.py      — consultation tests (34)
-test_dawa.py      — dawa check tests (24)
-test_real.py      — live API integration test (skips without keys)
+tests/            — discoverable offline regression suite
+test_flow.py      — consultation workflow checks (35)
+test_dawa.py      — medication and Dawa checks (45)
+test_real.py      — paid live integration probe (requires SMARTSEHAT_RUN_LIVE=1)
 ```
 
-## What's Verified
+## What is verified
 
-- 34 automated checks on the consultation pipeline: triage (English/Urdu/
+- 35 scripted checks on the consultation pipeline: triage (English/Urdu/
   Devanagari scripts), reasoning citations, HITL gates, emergency dispatch,
   and the doctor review loop.
-- 24 automated checks on the dawa pipeline: drug flags, dismiss flow,
-  finalization, and ledger audit.
-- 7 live API integration checks (STT, vision, cited reasoning,
-  prescription OCR at 6/6).
+- 45 medication/Dawa tests plus the discoverable offline suite cover bounded
+  rules, non-dismissable findings, stale receipt rejection, referral and ledger evidence.
+- Live API probes are opt-in and were not run as part of offline verification.
 - The district dashboard renders from the same immutable ledger; every
   number is a query over append-only events.
+
+The medication rules are a limited, source-backed prototype. Independent
+clinical/pharmacy validation and local formulary sign-off remain pending; see
+`docs/MEDICATION_EVIDENCE.md` for supported checks and explicit exclusions.

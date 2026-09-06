@@ -26,19 +26,28 @@ from pathlib import Path
 from typing import Any
 import yaml
 
-# Day-2: load .env BEFORE reading any env keys so real-mode agents pick them up.
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except Exception:
-    # python-dotenv is a pinned dep; if it's ever missing we still boot cleanly.
-    pass
+# Tests/offline runs can prevent local secrets from being loaded at import time.
+if os.getenv("DOTENV_DISABLED") != "1":
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except Exception:
+        pass
 
 
 def load_config() -> dict:
     cfg_path = Path(__file__).resolve().parent.parent / "config.yaml"
     with open(cfg_path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        config = yaml.safe_load(f) or {}
+    mode = os.getenv("SMARTSEHAT_MODE")
+    if os.getenv("SMARTSEHAT_OFFLINE") == "1":
+        mode = "stub"
+    if mode:
+        mode = mode.strip().lower()
+        if mode not in {"stub", "real"}:
+            raise ValueError("SMARTSEHAT_MODE must be 'stub' or 'real'.")
+        config["agents"] = mode
+    return config
 
 
 def _image_data_url(image_path: str) -> str:
@@ -293,6 +302,11 @@ class ModelRouter:
         raise ValueError(f"unknown op {op}")
 
     def _route(self, role: str, op: str, *args, **kwargs) -> tuple[Any, str]:
+        if (self.config.get("agents") or "stub").lower() != "real":
+            raise RuntimeError(
+                "External providers are disabled in offline/stub mode. "
+                "Use the explicit demo/manual workflow or opt into real mode."
+            )
         chain = self.config["role_routes"][role]
         last_err: Exception | None = None
         for spec in chain:
@@ -324,4 +338,6 @@ class ModelRouter:
         return self._route(role, "vision", image_path, prompt, temperature)
 
     def provider_health(self) -> dict[str, bool]:
+        if (self.config.get("agents") or "stub").lower() != "real":
+            return {name: False for name in self.providers}
         return {name: p.healthy() for name, p in self.providers.items()}

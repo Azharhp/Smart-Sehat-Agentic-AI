@@ -21,9 +21,12 @@ def seed(path: str | None = None) -> None:
                 "INSERT OR REPLACE INTO users (user_id, name, role, bhu_id) VALUES (?, ?, ?, ?)",
                 ("PM-2213", "Farid Khan", "paramedic", "BHU-0442"))
         _upsert(conn,
-                "INSERT OR REPLACE INTO patients (patient_id, name, age, sex, chronic_conditions_json, allergies_json) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                ("PT-0001", "Rehmat Gul", 42, "M", json.dumps(["diabetes"]), json.dumps([])))
+                "INSERT OR REPLACE INTO user_facilities(user_id,bhu_id) VALUES (?,?)",
+                ("PM-2213", "BHU-0442"))
+        _upsert(conn,
+                "INSERT OR REPLACE INTO patients (patient_id, name, age, sex, chronic_conditions_json, allergies_json, bhu_id) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                ("PT-0001", "Rehmat Gul", 42, "M", json.dumps(["diabetes"]), json.dumps([]), "BHU-0442"))
         conn.commit()
     finally:
         conn.close()

@@ -92,6 +92,8 @@ def _seed_reference_data(conn: sqlite3.Connection) -> dict[str, list[str]]:
             "INSERT OR IGNORE INTO users (user_id, name, role, bhu_id) VALUES (?, ?, ?, ?)",
             (PARAMEDICS[bhu_id], f"Synthetic Paramedic {suffix}", "paramedic", bhu_id),
         )
+        conn.execute("INSERT OR IGNORE INTO user_facilities(user_id,bhu_id) VALUES (?,?)",
+                     (PARAMEDICS[bhu_id], bhu_id))
 
     patients_by_bhu: dict[str, list[str]] = {bhu_id: [] for bhu_id, _, _ in BHUS}
     for number in range(1, 41):
@@ -100,8 +102,8 @@ def _seed_reference_data(conn: sqlite3.Connection) -> dict[str, list[str]]:
         patients_by_bhu[bhu_id].append(patient_id)
         conn.execute(
             "INSERT OR IGNORE INTO patients "
-            "(patient_id, name, age, sex, chronic_conditions_json, allergies_json) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            "(patient_id, name, age, sex, chronic_conditions_json, allergies_json, bhu_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
                 patient_id,
                 f"Synthetic Patient {number:02d}",
@@ -109,6 +111,7 @@ def _seed_reference_data(conn: sqlite3.Connection) -> dict[str, list[str]]:
                 random.choice(["M", "F"]),
                 json.dumps([]),
                 json.dumps([]),
+                bhu_id,
             ),
         )
     conn.commit()

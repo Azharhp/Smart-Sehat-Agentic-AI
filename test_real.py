@@ -39,6 +39,8 @@ def _load_config_agents() -> str:
 
 
 def main() -> int:
+    if os.getenv("SMARTSEHAT_RUN_LIVE") != "1":
+        return _skip("set SMARTSEHAT_RUN_LIVE=1 to explicitly opt into paid live tests")
     from dotenv import load_dotenv
     load_dotenv()
 
@@ -54,10 +56,12 @@ def main() -> int:
 
     import seed
     from smartsehat import audit, corpus
+    from smartsehat.auth import DemoAuthenticationProvider
     from smartsehat.graph import resume_case, run_case
     from smartsehat.router import ModelRouter
 
     seed.seed()
+    actor = DemoAuthenticationProvider().authenticate("PM-2213")
     results: list[tuple[str, bool, str]] = []
 
     def check(name: str, cond: bool, detail: str = "") -> None:
@@ -67,7 +71,7 @@ def main() -> int:
     # -- Scenario A: full TB case (audio + x-ray)
     ckpt = os.path.join(os.path.dirname(os.environ["SMARTSEHAT_DB"]), "real_ckpt.db")
     case_id, thread_id, first = run_case(
-        "PT-0001", "PM-2213",
+        "PT-0001", actor,
         audio_path=str(AUDIO), image_path=str(XRAY),
         checkpoint_db=ckpt,
     )
@@ -91,7 +95,7 @@ def main() -> int:
 
     # Confirm the transcript verbatim, then approve.
     tx = json.loads(stt_evs[0]["payload_json"] or "{}").get("transcript") or ""
-    resume_case(thread_id, action="confirm", transcript=tx, checkpoint_db=ckpt)
+    resume_case(thread_id, actor, action="confirm", transcript=tx, checkpoint_db=ckpt)
 
     # Now at HITL gate — pull the reasoning event before approving.
     reasoning_evs = [e for e in audit.get_case_timeline(case_id)
@@ -128,7 +132,7 @@ def main() -> int:
         check("real: vision produced a VISION_FINDING event", False)
 
     # Close the loop
-    resume_case(thread_id, action="approve", checkpoint_db=ckpt)
+    resume_case(thread_id, actor, action="approve", checkpoint_db=ckpt)
 
     # -- Scenario B: prescription-image vision call
     router = ModelRouter()

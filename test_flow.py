@@ -3,7 +3,7 @@
 Covers the Day-2 node sequence:
   STT_RESULT -> VOICE_TRANSCRIPT_CONFIRMED -> STRUCTURE_EXTRACTED ->
   TRIAGE_DECISION + VISION_FINDING (parallel) ->
-  REASONING_RESULT -> PHARM_CHECK_PASSED -> HITL_DECISION -> RX_FINALIZED
+  REASONING_RESULT -> MEDICATION_REVIEW -> HITL_DECISION -> RX_FINALIZED
 and preserves every Day-1 safety invariant (Bug #1: gate-2 modify
 re-enters the pharmacy loop; Bug #3: HITL audit records true
 original-vs-final; RED path skips reasoning/pharm).
@@ -13,19 +13,22 @@ Scenario 5: the deterministic triage floor — Urdu-script AND Devanagari
 with NO structured symptoms. Safety law: triage must not depend on LLM
 extraction, and must work for BOTH STT engines in the chain.
 
-All scenarios run OFFLINE in stub mode (config.yaml: agents: stub).
+All scenarios force stub mode, prohibit model/network calls, and use temporary
+databases. These are software workflow checks using synthetic medicines and
+patient context; their success is not evidence of clinical validation.
 """
 from __future__ import annotations
 import json
 import os
 import sys
 import tempfile
+from unittest.mock import patch
 
-os.environ["SMARTSEHAT_DB"] = os.path.join(tempfile.mkdtemp(prefix="smartsehat_"), "smartsehat.db")
-
-from smartsehat import audit                      # noqa: E402
+from smartsehat import agents, audit              # noqa: E402
+from smartsehat.auth import DemoAuthenticationProvider  # noqa: E402
 from smartsehat.rules_triage import evaluate      # noqa: E402
 from smartsehat.graph import resume_case, run_case  # noqa: E402
+from smartsehat.medication_review import NO_MEDICINES, format_medicines, normalize_medicines  # noqa: E402
 import seed                                       # noqa: E402
 
 RESULTS: list[tuple[str, bool, str]] = []
@@ -51,11 +54,46 @@ def _order_ok(types: list[str], *seq: str) -> bool:
 
 
 CANNED_URDU = "مجھے پچھلے دو ہفتوں سے کھانسی ہے، رات کو پسینہ آتا ہے"
+STUB_CONFIG = {"agents": "stub", "allowlist_medicines": ["paracetamol", "amoxicillin"]}
+SYNTHETIC_CONTEXT = {
+    "age": 42, "sex": "M", "weight_kg": 70, "allergies": [],
+    "current_meds": [], "pregnant": False, "renal_impairment": False,
+    "liver_disease": False, "context_confirmed": True,
+}
+REVIEW_NOTE = (
+    "Synthetic test: reviewed listed evidence, indication, missing coverage and "
+    "escalation needs. This recorded decision is not clinical validation."
+)
+
+
+def _medicine(name: str, dose_mg: float, frequency: float = 3) -> list[dict]:
+    return [{"name": name, "strength": "500 mg", "dose_mg": dose_mg,
+             "frequency_per_day": frequency, "duration_days": 2, "route": "oral",
+             "indication": "Synthetic workflow test; requires clinician assessment"}]
+
+
+def _expected_draft(medicines: list[dict]) -> str:
+    normalized, errors = normalize_medicines(medicines)
+    assert not errors, errors
+    return format_medicines(normalized)
+
+
+def _actor():
+    return DemoAuthenticationProvider().authenticate("PM-2213")
+
+
+def _approve(thread_id: str, ckpt: str):
+    return resume_case(thread_id, _actor(), action="approve", checkpoint_db=ckpt,
+                       medication_review_acknowledged=True, reason=REVIEW_NOTE)
+
+
+def _no_network(*args, **kwargs):
+    raise AssertionError("Workflow tests must not call models or the network.")
 
 
 def _confirm_transcript(thread_id: str, ckpt: str, text: str = CANNED_URDU):
     """Advance through the transcript gate — must happen before the HITL gate."""
-    return resume_case(thread_id, action="confirm", transcript=text, checkpoint_db=ckpt)
+    return resume_case(thread_id, _actor(), action="confirm", transcript=text, checkpoint_db=ckpt)
 
 
 # ----------------------------------------------------------------------
@@ -64,7 +102,9 @@ def _confirm_transcript(thread_id: str, ckpt: str, text: str = CANNED_URDU):
 
 def scenario_yellow_modify_then_approve() -> None:
     ckpt = os.path.join(os.path.dirname(os.environ["SMARTSEHAT_DB"]), "yellow_ckpt.db")
-    case_id, thread_id, first = run_case("PT-0001", "PM-2213", checkpoint_db=ckpt)
+    case_id, thread_id, first = run_case("PT-0001", _actor(), checkpoint_db=ckpt,
+                                        image_path=os.path.join(os.path.dirname(__file__), "assets", "xray", "tb.jpg"),
+                                        medication_context=SYNTHETIC_CONTEXT)
     check("yellow: first invoke reached TRANSCRIPT gate",
           "__interrupt__" in first,
           f"result keys: {list(first.keys())}")
@@ -74,14 +114,15 @@ def scenario_yellow_modify_then_approve() -> None:
           "__interrupt__" in r_after_confirm,
           f"result keys: {list(r_after_confirm.keys())}")
 
-    r_mod = resume_case(thread_id, action="modify",
-                        modified_content="amoxicillin 500mg TDS 7 days",
+    edited_medicines = _medicine("amoxicillin", 500)
+    r_mod = resume_case(thread_id, _actor(), action="modify",
+                        proposed_medicines=edited_medicines,
                         checkpoint_db=ckpt)
     check("yellow: modify triggers second HITL interrupt",
           "__interrupt__" in r_mod,
           f"result keys: {list(r_mod.keys())}")
 
-    r_final = resume_case(thread_id, action="approve", checkpoint_db=ckpt)
+    r_final = _approve(thread_id, ckpt)
     check("yellow: approve completes graph",
           "__interrupt__" not in r_final,
           f"result keys: {list(r_final.keys())}")
@@ -97,16 +138,16 @@ def scenario_yellow_modify_then_approve() -> None:
     types = _event_types(case_id)
     required = {"STT_RESULT", "VOICE_TRANSCRIPT_CONFIRMED", "STRUCTURE_EXTRACTED",
                 "TRIAGE_DECISION", "VISION_FINDING", "REASONING_RESULT",
-                "PHARM_CHECK_PASSED", "HITL_DECISION", "RX_FINALIZED"}
+                "MEDICATION_REVIEW", "HITL_DECISION", "RX_FINALIZED"}
     check("yellow: all required events present",
           required.issubset(set(types)),
           f"missing: {required - set(types)}")
-    check("yellow: pharm re-ran after modify (2x PHARM_CHECK_PASSED)",
-          types.count("PHARM_CHECK_PASSED") == 2,
-          f"count={types.count('PHARM_CHECK_PASSED')}")
+    check("yellow: medication review re-ran after modify (2x MEDICATION_REVIEW)",
+          types.count("MEDICATION_REVIEW") == 2,
+          f"count={types.count('MEDICATION_REVIEW')}")
     check("yellow: critical order stt→confirmed→structure→reasoning→hitl→final",
           _order_ok(types, "STT_RESULT", "VOICE_TRANSCRIPT_CONFIRMED",
-                    "STRUCTURE_EXTRACTED", "REASONING_RESULT",
+                    "STRUCTURE_EXTRACTED", "REASONING_RESULT", "MEDICATION_REVIEW",
                     "HITL_DECISION", "RX_FINALIZED"))
 
     decs = audit.get_hitl_decisions(case_id)
@@ -118,9 +159,13 @@ def scenario_yellow_modify_then_approve() -> None:
         check("audit: original != final after modification", orig != fin,
               f"orig={orig.get('prescription_draft')} | final={fin.get('prescription_draft')}")
         check("audit: final contains the paramedic's edit",
-              "amoxicillin 500mg TDS 7 days" in fin.get("prescription_draft", ""))
+              fin.get("prescription_draft") == _expected_draft(edited_medicines))
         check("audit: original preserves the PRE-edit draft",
-              "amoxicillin" not in (orig.get("prescription_draft") or ""))
+              orig.get("prescription_draft") == NO_MEDICINES)
+        review = fin.get("medication_review") or {}
+        check("audit: final records source version, fingerprint and acknowledgement",
+              bool(review.get("ruleset_version")) and bool(review.get("input_hash"))
+              and fin.get("review_acknowledged") is True)
 
 
 # ----------------------------------------------------------------------
@@ -129,29 +174,32 @@ def scenario_yellow_modify_then_approve() -> None:
 
 def scenario_modify_at_second_gate() -> None:
     ckpt = os.path.join(os.path.dirname(os.environ["SMARTSEHAT_DB"]), "gate2_ckpt.db")
-    case_id, thread_id, _first = run_case("PT-0001", "PM-2213", checkpoint_db=ckpt)
+    case_id, thread_id, _first = run_case("PT-0001", _actor(), checkpoint_db=ckpt,
+                                         medication_context=SYNTHETIC_CONTEXT)
     _confirm_transcript(thread_id, ckpt)
 
-    resume_case(thread_id, action="modify", modified_content="EDIT-ONE", checkpoint_db=ckpt)
-    r2 = resume_case(thread_id, action="modify", modified_content="EDIT-TWO", checkpoint_db=ckpt)
+    first_edit = _medicine("paracetamol", 500, 2)
+    latest_edit = _medicine("paracetamol", 1000, 3)
+    resume_case(thread_id, _actor(), action="modify", proposed_medicines=first_edit, checkpoint_db=ckpt)
+    r2 = resume_case(thread_id, _actor(), action="modify", proposed_medicines=latest_edit, checkpoint_db=ckpt)
     check("gate2: second-gate modify re-enters HITL (pharm re-ran)",
           "__interrupt__" in r2,
           f"result keys: {list(r2.keys())}")
 
-    r3 = resume_case(thread_id, action="approve", checkpoint_db=ckpt)
+    r3 = _approve(thread_id, ckpt)
     check("gate2: final approve completes graph",
           "__interrupt__" not in r3)
 
     types = _event_types(case_id)
     check("gate2: pharm ran THREE times (no edit ever dropped)",
-          types.count("PHARM_CHECK_PASSED") == 3,
-          f"count={types.count('PHARM_CHECK_PASSED')}")
+          types.count("MEDICATION_REVIEW") == 3,
+          f"count={types.count('MEDICATION_REVIEW')}")
 
     decs = audit.get_hitl_decisions(case_id)
     if decs:
         fin = json.loads(decs[0]["final_json"])
-        check("gate2: final draft is the LATEST edit (EDIT-TWO)",
-              "EDIT-TWO" in fin.get("prescription_draft", ""),
+        check("gate2: final draft is the LATEST structured dose edit",
+              fin.get("prescription_draft") == _expected_draft(latest_edit),
               f"final={fin.get('prescription_draft')}")
     case_row = audit.get_case(case_id)
     check("gate2: hitl_outcome is 'modified'",
@@ -164,7 +212,7 @@ def scenario_modify_at_second_gate() -> None:
 
 def scenario_red_path() -> None:
     ckpt = os.path.join(os.path.dirname(os.environ["SMARTSEHAT_DB"]), "red_ckpt.db")
-    case_id, thread_id, first = run_case("PT-0001", "PM-2213",
+    case_id, thread_id, first = run_case("PT-0001", _actor(),
                                          force_triage="RED", checkpoint_db=ckpt)
     check("red: first invoke reached TRANSCRIPT gate",
           "__interrupt__" in first)
@@ -173,7 +221,7 @@ def scenario_red_path() -> None:
     check("red: transcript confirm advances to HITL gate",
           "__interrupt__" in r_after_confirm)
 
-    r_final = resume_case(thread_id, action="approve", checkpoint_db=ckpt)
+    r_final = resume_case(thread_id, _actor(), action="approve", checkpoint_db=ckpt)
     check("red: approve completes graph",
           "__interrupt__" not in r_final)
 
@@ -183,7 +231,7 @@ def scenario_red_path() -> None:
     check("red: reasoning_node did NOT run",
           "REASONING_RESULT" not in types, str(types))
     check("red: pharm_node did NOT run",
-          "PHARM_CHECK_PASSED" not in types, str(types))
+          "MEDICATION_REVIEW" not in types, str(types))
     check("red: referral issued at finalize",
           "REFERRAL_ISSUED" in types, str(types))
     case_row = audit.get_case(case_id)
@@ -197,10 +245,10 @@ def scenario_red_path() -> None:
 
 def scenario_transcript_correction() -> None:
     ckpt = os.path.join(os.path.dirname(os.environ["SMARTSEHAT_DB"]), "tc_ckpt.db")
-    case_id, thread_id, _first = run_case("PT-0001", "PM-2213", checkpoint_db=ckpt)
+    case_id, thread_id, _first = run_case("PT-0001", _actor(), checkpoint_db=ckpt)
     edited = "مجھے پچھلے تین ہفتوں سے کھانسی ہے"  # paramedic edited: 3 weeks
     _confirm_transcript(thread_id, ckpt, text=edited)
-    resume_case(thread_id, action="approve", checkpoint_db=ckpt)
+    resume_case(thread_id, _actor(), action="approve", checkpoint_db=ckpt)
 
     events = audit.get_case_timeline(case_id)
     confirms = [e for e in events if e["event_type"] == "VOICE_TRANSCRIPT_CONFIRMED"]
@@ -266,13 +314,26 @@ def scenario_triage_floor() -> None:
 
 
 def main() -> int:
-    seed.seed()
-    print(f"DB at: {os.environ['SMARTSEHAT_DB']}")
-    scenario_yellow_modify_then_approve()
-    scenario_modify_at_second_gate()
-    scenario_red_path()
-    scenario_transcript_correction()
-    scenario_triage_floor()
+    RESULTS.clear()
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    with tempfile.TemporaryDirectory(prefix="smartsehat_flow_") as directory:
+        database = os.path.join(directory, "smartsehat.db")
+        with (patch.object(audit, "DB_PATH", database),
+              patch.dict(os.environ, {"SMARTSEHAT_DB": database,
+                                      "SMARTSEHAT_MEDIA_ROOT": os.path.join(directory, "private-media"),
+                                      "SMARTSEHAT_AUTH_MODE": "demo"}),
+              patch.object(agents, "_config", return_value=STUB_CONFIG),
+              patch.object(agents, "_router", side_effect=_no_network),
+              patch("socket.socket.connect", side_effect=_no_network),
+              patch("socket.create_connection", side_effect=_no_network)):
+            seed.seed()
+            print("Synthetic workflow tests: stub mode forced; network disabled; temporary databases.")
+            scenario_yellow_modify_then_approve()
+            scenario_modify_at_second_gate()
+            scenario_red_path()
+            scenario_transcript_correction()
+            scenario_triage_floor()
     fails = [n for n, ok, _ in RESULTS if not ok]
     print("\n===== SUMMARY =====")
     print(f"Total: {len(RESULTS)}  Passed: {len(RESULTS) - len(fails)}  Failed: {len(fails)}")

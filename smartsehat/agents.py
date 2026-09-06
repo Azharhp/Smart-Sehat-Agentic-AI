@@ -21,6 +21,7 @@ Safety laws still in force:
 """
 from __future__ import annotations
 import json
+import math
 import re
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -31,6 +32,11 @@ from langgraph.types import interrupt
 from . import audit, corpus
 from .rules_triage import evaluate as triage_evaluate
 from .state import PatientState
+from .medication_review import (
+    NO_MEDICINES, draft_to_medicines, format_medicines,
+    normalize_medicines, review_medicines,
+)
+from .emergency import build_emergency_protocol
 
 # ----------------------------------------------------------------------
 # Stub/real mode helpers
@@ -115,12 +121,16 @@ def transcript_gate(state: PatientState) -> dict[str, Any]:
         "case_id": state["case_id"],
         "transcript": original,
     })
-    confirmed = (resume or {}).get("transcript") or original
+    resume_payload = resume if isinstance(resume, dict) else {}
+    confirmed = resume_payload.get("transcript") or original
+    decision_actor_id = resume_payload.get("_actor_id") or state.get("paramedic_id")
     corrected = bool(original) and (confirmed != original)
     audit.log_event(state["case_id"], "VOICE_TRANSCRIPT_CONFIRMED",
-                    {"transcript": confirmed, "paramedic_corrected": corrected},
+                    {"transcript": confirmed, "paramedic_corrected": corrected,
+                     "actor_id": decision_actor_id},
                     provider="paramedic", confidence=1.0)
-    return {"transcript_confirmed": confirmed, "paramedic_corrected": corrected}
+    return {"transcript_confirmed": confirmed, "paramedic_corrected": corrected,
+            "decision_actor_id": decision_actor_id}
 
 
 # ----------------------------------------------------------------------
@@ -197,24 +207,12 @@ def structure_node(state: PatientState) -> dict[str, Any]:
 # ----------------------------------------------------------------------
 
 def triage_node(state: PatientState) -> dict[str, Any]:
-    if _mode() != "real":
-        # Stub keeps Day-1 canned behaviour.
-        forced = state.get("force_triage")
-        if forced == "RED":
-            payload = {"triage_level": "RED", "rules": ["suspected_ACS"],
-                       "instruction": "RED: transport immediately, initiate emergency protocol"}
-        else:
-            payload = {"triage_level": "YELLOW", "rules": ["hemoptysis_streak"],
-                       "instruction": "Minor hemoptysis — same-day RHU referral; continue pathway"}
-        audit.log_event(state["case_id"], "TRIAGE_DECISION", payload,
-                        provider="stub", confidence=0.9)
-        return {"triage_level": payload["triage_level"], "triage_rules": payload["rules"]}
-    # Real mode — deterministic rules engine.
+    # The same deterministic rules run in demo and real modes.
     r = triage_evaluate(state)
     payload = {"triage_level": r["level"], "rules": r["triggered_rules"],
                "instruction": r["instruction"], "engine": "local-rules"}
     audit.log_event(state["case_id"], "TRIAGE_DECISION", payload,
-                    provider="local-rules", confidence=1.0)
+                    provider="local-rules", confidence=None)
     return {"triage_level": r["level"], "triage_rules": r["triggered_rules"]}
 
 
@@ -278,6 +276,13 @@ _REASONING_SYSTEM_TMPL = (
     "Return STRICT JSON with keys: differential_diagnosis "
     "(list of {diagnosis, probability, evidence:[], citations:[chunk_ids]}), "
     "recommended_workup (list[str]), initial_management (str), "
+    "proposed_medicines (list of {name:str, strength:str|null, dose_mg:number|null, "
+    "frequency_per_day:number|null, duration_days:number|null, route:str|null, indication:str|null}). "
+    "dose_mg is administered milligrams per dose, NOT the package strength. "
+    "Do not invent missing dose, frequency, duration or patient details. Use null. "
+    "Return an empty proposed_medicines list when no medicine is proposed. "
+    "All medicine proposals mentioned in management MUST also appear in proposed_medicines. "
+    "These are proposals for human review, never approved prescriptions. "
     "confidence (float 0..1), uncertainty_note (str). No prose. No markdown fences."
 )
 
@@ -316,17 +321,23 @@ def reasoning_node(state: PatientState) -> dict[str, Any]:
         audit.log_event(state["case_id"], "REASONING_RESULT", payload,
                         provider="stub", confidence=0.72)
         return {"ddx": payload["ddx"], "confidence": payload["confidence"],
-                "management": payload["management"]}
+                "management": payload["management"], "proposed_medicines": [],
+                "prescription_draft": NO_MEDICINES, "prescription_source": "demo",
+                "medication_plan_error": None, "workup": ["Clinician review and NTP referral"],
+                "uncertainty_note": "Synthetic demonstration; not a clinical assessment."}
 
     allowlist = _config().get("allowlist_medicines") or []
     chunks = corpus.retrieve(dict(state))
-    chunk_map = corpus.get_chunk_map()
+    chunk_map = {chunk["id"]: chunk for chunk in chunks}
     context = {
         "demographics": state.get("demographics"),
         "chronic_conditions": state.get("chronic_conditions"),
         "symptoms": state.get("symptoms"),
         "imaging_findings": state.get("imaging_findings"),
         "triage_level": state.get("triage_level"),
+        "medication_context": state.get("medication_context"),
+        "confirmed_history": state.get("transcript_confirmed"),
+        "vitals": state.get("vitals"),
     }
     # FIX: braces in the JSON schema made str.format() crash (KeyError on
     # 'diagnosis, probability, evidence'). Only substitute the allowlist —
@@ -347,7 +358,25 @@ def reasoning_node(state: PatientState) -> dict[str, Any]:
     except Exception as e:
         audit.log_event(state["case_id"], "REASONING_DEGRADED",
                         {"error": str(e)}, provider=provider)
-        return {"ddx": [], "confidence": 0.0, "degraded": "reasoning_unavailable"}
+        return {"ddx": [], "confidence": 0.0, "degraded": "reasoning_unavailable",
+                "proposed_medicines": [], "medication_plan_error": "Reasoning unavailable; no medication plan was established."}
+
+    def valid_shape(p: dict | None) -> bool:
+        if not isinstance(p, dict) or not isinstance(p.get("differential_diagnosis"), list):
+            return False
+        if not isinstance(p.get("initial_management"), str):
+            return False
+        for diagnosis in p["differential_diagnosis"]:
+            if not isinstance(diagnosis, dict) or not isinstance(diagnosis.get("diagnosis"), str):
+                return False
+            if not isinstance(diagnosis.get("citations", []), list) or not all(isinstance(c, str) for c in diagnosis.get("citations", [])):
+                return False
+        confidence = p.get("confidence")
+        return (not isinstance(confidence, bool) and isinstance(confidence, (int, float))
+                and math.isfinite(confidence) and 0 <= confidence <= 1)
+
+    if not valid_shape(parsed):
+        parsed = None
 
     # Citation-gate: WARN mode with one regeneration retry.
     def _validate(p: dict) -> tuple[list[str], list[str]]:
@@ -374,7 +403,7 @@ def reasoning_node(state: PatientState) -> dict[str, Any]:
                     temperature=0.1,
                 )
                 p2 = _extract_json(raw2)
-                if p2:
+                if valid_shape(p2):
                     parsed = p2
                     invalid, offenders = _validate(parsed)
             except Exception:
@@ -393,7 +422,8 @@ def reasoning_node(state: PatientState) -> dict[str, Any]:
     if not parsed:
         audit.log_event(state["case_id"], "REASONING_DEGRADED",
                         {"reason": "no_parseable_json"}, provider=provider)
-        return {"ddx": [], "confidence": 0.0, "degraded": "reasoning_unavailable"}
+        return {"ddx": [], "confidence": 0.0, "degraded": "reasoning_unavailable",
+                "proposed_medicines": [], "medication_plan_error": "No valid structured clinical plan was returned. Review or refer."}
 
     ddx = parsed.get("differential_diagnosis") or []
     valid_count = sum(len([c for c in (d.get("citations") or []) if c in chunk_map])
@@ -408,33 +438,60 @@ def reasoning_node(state: PatientState) -> dict[str, Any]:
                "uncertainty_note": parsed.get("uncertainty_note"),
                "citation_warnings": warnings,
                "valid_citation_count": valid_count}
+    proposed, medication_errors = normalize_medicines(parsed.get("proposed_medicines"))
+    medication_errors.append(
+        "Model medicine instructions have not been reconciled by a person. "
+        "Review the assessment and workup, then submit the complete structured medicine plan "
+        "(or explicitly confirm no medicines) before approval."
+    )
+    plan_error = " ".join(medication_errors)
+    # A legacy/malformed model response must not be reported as 'no medicines'.
+    payload.update(proposed_medicines=proposed, medication_plan_error=plan_error)
     audit.log_event(state["case_id"], "REASONING_RESULT", payload,
                     provider=provider, confidence=confidence)
     return {"ddx": ddx, "confidence": confidence,
             "management": parsed.get("initial_management"),
             "citation_warnings": warnings,
-            "valid_citation_count": valid_count}
+            "valid_citation_count": valid_count,
+            "proposed_medicines": proposed, "prescription_source": "model",
+            "prescription_draft": format_medicines(proposed),
+            "medication_plan_error": plan_error,
+            "workup": parsed.get("recommended_workup") if isinstance(parsed.get("recommended_workup"), list) else [],
+            "uncertainty_note": str(parsed.get("uncertainty_note") or "")}
 
 
 # ----------------------------------------------------------------------
-# Pharm, Emergency, Finalize — behaviour unchanged from Day-1 fix
+# Shared medicine review, emergency referral, and decision recording
 # ----------------------------------------------------------------------
 
 def pharm_node(state: PatientState) -> dict[str, Any]:
-    draft = state.get("prescription_draft") or "none — NTP referral protocol"
-    payload = {"prescription_draft": draft, "flags": [],
-               "insurance_status": {"status": "verified", "source": "live"}}
-    audit.log_event(state["case_id"], "PHARM_CHECK_PASSED", payload,
-                    provider="stub", confidence=1.0)
-    return {"prescription_draft": draft, "insurance_status": payload["insurance_status"]}
+    medicines = state.get("proposed_medicines")
+    if medicines is None:
+        medicines = draft_to_medicines(state.get("prescription_draft"))
+    context = state.get("medication_context") or {}
+    allowlist = _config().get("allowlist_medicines") or []
+    report = review_medicines(medicines, context, allowlist=allowlist)
+    if state.get("medication_plan_error"):
+        report["status"] = "HOLD"
+        report["approval_blocked"] = True
+        report["not_assessed"].append(state["medication_plan_error"])
+    audit.log_event(state["case_id"], "MEDICATION_REVIEW",
+                    {"review": report, "patient_context": context,
+                     "actor_id": state.get("decision_actor_id") or state.get("paramedic_id"),
+                     "source": state.get("prescription_source")},
+                    provider="local-rules", confidence=None)
+    return {"proposed_medicines": medicines, "prescription_draft": format_medicines(report["medicines"]),
+            "medication_review": report, "medication_allowlist": allowlist,
+            "medication_review_acknowledged": False, "review_validation_error": None}
 
 
 def emergency_node(state: PatientState) -> dict[str, Any]:
-    payload = {"instruction": "Suspected ACS: aspirin 300 mg chewed NOW unless "
-                              "contraindicated. Arrange emergency transport to DHQ."}
+    payload = build_emergency_protocol(state.get("triage_level", "RED"),
+                                       state.get("triage_rules", []))
     audit.log_event(state["case_id"], "EMERGENCY_PROTOCOL", payload,
-                    provider="stub", confidence=0.95)
-    return {"prescription_draft": payload["instruction"]}
+                    provider="local-workflow", confidence=None)
+    return {"prescription_draft": payload["instruction"], "proposed_medicines": [],
+            "emergency_protocol": payload}
 
 
 def finalize_node(state: PatientState) -> dict[str, Any]:
@@ -444,12 +501,18 @@ def finalize_node(state: PatientState) -> dict[str, Any]:
     elif state.get("triage_level") == "RED":
         etype, outcome = "REFERRAL_ISSUED", "emergency_referral"
     else:
-        etype, outcome = "RX_FINALIZED", "prescription_issued"
+        etype = "RX_FINALIZED"
+        outcome = "prescription_issued" if state.get("proposed_medicines") else "consultation_completed"
     payload = {"hitl_status": hitl_status,
                "prescription_draft": state.get("prescription_draft"),
                "triage_level": state.get("triage_level"),
                "ddx": state.get("ddx"), "outcome": outcome}
-    audit.log_event(state["case_id"], etype, payload, provider="stub")
+    payload.update(proposed_medicines=state.get("proposed_medicines", []),
+                   medication_review=state.get("medication_review"),
+                   review_acknowledged=state.get("medication_review_acknowledged", False),
+                   review_note=state.get("hitl_reason"),
+                   actor_id=state.get("decision_actor_id") or state.get("paramedic_id"))
+    audit.log_event(state["case_id"], etype, payload, provider="local-workflow")
     audit.update_case(
         state["case_id"],
         completed_at=datetime.now(timezone.utc).isoformat(),

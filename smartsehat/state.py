@@ -19,7 +19,23 @@ class PatientState(TypedDict, total=False):
     management: str                 # reasoning agent's management line
     prescription_draft: str
     original_prescription: str      # pre-modification draft (audit fidelity — Bug #3 fix)
-    insurance_status: dict[str, Any]
+    paramedic_id: str
+    decision_actor_id: str
+    bhu_id: str
+    proposed_medicines: list[dict[str, Any]]
+    medication_context: dict[str, Any]
+    medication_review: dict[str, Any]
+    medication_allowlist: list[str]
+    medication_plan_error: str | None
+    medication_review_acknowledged: bool
+    review_validation_error: str | None
+    prescription_source: str
+    workup: list[str]
+    uncertainty_note: str
+    emergency_protocol: dict[str, Any]
+    clinical_context_snapshot: dict[str, Any]
+    audio_artifact_id: str
+    image_artifact_id: str
     hitl_status: str  # pending | approved | modified | rejected
     hitl_action: str  # approve | modify | reject
     hitl_reason: str
@@ -29,7 +45,7 @@ class PatientState(TypedDict, total=False):
     # Day-2 additions
     audio_path: str
     image_path: str
-    transcript: str                    # raw STT output (Urdu)
+    transcript: str                    # raw STT output
     transcript_confirmed: str          # paramedic-corrected final transcript
     paramedic_corrected: bool          # did the paramedic edit the STT text?
     chief_complaint: str
@@ -41,3 +57,5 @@ class PatientState(TypedDict, total=False):
     citation_warnings: list[str]       # reasoning citation-gate warnings
     valid_citation_count: int
     degraded: str                      # e.g. "reasoning_unavailable"
+    # Language selector
+    stt_language: str                  # ur | en | hi (speech-to-text language)

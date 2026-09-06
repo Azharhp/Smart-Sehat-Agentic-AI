@@ -86,6 +86,8 @@ def init_db(path: str | None = None) -> None:
     conn = _connect(path)
     try:
         conn.executescript(SCHEMA)
+        from .migrations import migrate
+        migrate(conn)
         conn.commit()
     finally:
         conn.close()
@@ -178,6 +180,15 @@ def get_case(case_id: str, path: str | None = None) -> dict | None:
     conn = _connect(path)
     try:
         row = conn.execute("SELECT * FROM cases WHERE case_id = ?", (case_id,)).fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def get_patient(patient_id: str, path: str | None = None) -> dict | None:
+    conn = _connect(path)
+    try:
+        row = conn.execute("SELECT * FROM patients WHERE patient_id = ?", (patient_id,)).fetchone()
         return dict(row) if row else None
     finally:
         conn.close()

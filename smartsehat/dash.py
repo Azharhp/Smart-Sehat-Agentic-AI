@@ -8,6 +8,8 @@ import pandas as pd
 import streamlit as st
 
 from smartsehat.audit import _connect, DB_PATH
+from smartsehat.access import authorize_district_view
+from smartsehat.domain import ActorContext
 
 
 BHU_COORDS = {
@@ -50,7 +52,8 @@ def _render_kpis(cutoff: str) -> None:
         (cutoff,),
     ).iloc[0]["n"])
     dawa_audits = int(_q(
-        "SELECT COUNT(*) AS n FROM cases WHERE outcome='dawa_check_completed'"
+        "SELECT COUNT(*) AS n FROM cases WHERE outcome IN ('dawa_check_completed', 'dawa_referred') "
+        "AND started_at >= ?", (cutoff,)
     ).iloc[0]["n"])
     hitl = _q(
         "SELECT action, COUNT(*) AS n FROM hitl_decisions GROUP BY action"
@@ -64,7 +67,7 @@ def _render_kpis(cutoff: str) -> None:
     columns[0].metric("Total cases (30d)", total_cases)
     columns[1].metric("Active BHUs", active_bhus)
     columns[2].metric("RED emergencies", red_cases)
-    columns[3].metric("Dawa audits", dawa_audits)
+    columns[3].metric("Dawa reviews / referrals (30d)", dawa_audits)
     columns[4].metric("HITL override rate", f"{override_rate:.0%}")
 
 
@@ -234,7 +237,8 @@ def _render_footer() -> None:
     )
 
 
-def render() -> None:
+def render(actor: ActorContext) -> None:
+    authorize_district_view(actor)
     cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
     _render_header()
     _render_kpis(cutoff)
