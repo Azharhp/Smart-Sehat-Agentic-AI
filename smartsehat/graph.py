@@ -28,8 +28,10 @@ from langgraph.types import Command, interrupt
 
 from . import audit
 from .agents import (
+    early_safety_node,
     emergency_node,
     finalize_node,
+    intake_gate,
     pharm_node,
     reasoning_node,
     stt_node,
@@ -46,6 +48,37 @@ from .medication_review import (
     approval_error, draft_to_medicines, format_medicines,
     normalize_medicines, review_medicines,
 )
+
+
+def _route_after_transcript(state: PatientState) -> str:
+    """An invalid/blocked history confirmation stays at the transcript gate.
+
+    When the worker's correction removes configured critical evidence (or the
+    accepted history is otherwise invalid), the graph re-arms the transcript
+    gate with the validation error + affected rules visible instead of
+    silently advancing to the emergency/review card. Only a confirmed accepted
+    history proceeds to the early safety screen.
+    """
+    if state.get("history_validation_error"):
+        return "retry"
+    return "early_safety"
+
+
+def _route_after_early_safety(state: PatientState) -> str:
+    """RED surfaces immediately after accepted history (A05 / CLIN-005).
+
+    A supported deterministic RED condition is routed straight to the
+    emergency protocol, before structure extraction, image analysis or LLM
+    reasoning run. YELLOW/NO_CONFIGURED_FLAG/INSUFFICIENT_DATA continue.
+    When the app's guided intake is requested (``intake_required``), the
+    non-RED path first collects pathway confirmation + structured questions;
+    otherwise the pre-existing transcript→structure protocol is unchanged.
+    """
+    if state.get("triage_level") == "RED":
+        return "emergency"
+    if state.get("intake_required"):
+        return "intake_gate"
+    return "structure"
 
 
 def _post_parallel(state: PatientState) -> dict[str, Any]:
@@ -129,7 +162,8 @@ def _gate_payload(state: PatientState, gate: str) -> dict:
                 "patient_id", "triage_level", "ddx", "prescription_draft", "degraded",
                 "confidence", "management", "workup", "uncertainty_note", "proposed_medicines",
                 "medication_context", "medication_review", "review_validation_error",
-                "emergency_protocol")}}
+                "emergency_protocol", "history", "triage_assessment", "pathway_selection",
+                "observations", "intake_answers")}}
 
 
 def _hitl_gate(state: PatientState) -> dict[str, Any]:
@@ -216,6 +250,8 @@ def build_graph(checkpointer=None):
     # Day-2 voice pipeline
     g.add_node("stt", stt_node)
     g.add_node("transcript_gate", transcript_gate)
+    g.add_node("early_safety", early_safety_node)
+    g.add_node("intake_gate", intake_gate)
     g.add_node("structure", structure_node)
     # Parallel clinical assessment
     g.add_node("triage", triage_node)
@@ -231,7 +267,22 @@ def build_graph(checkpointer=None):
 
     g.add_edge(START, "stt")
     g.add_edge("stt", "transcript_gate")
-    g.add_edge("transcript_gate", "structure")
+    # A blocked history confirmation retries the transcript gate (with the
+    # warning + acknowledgment visible); an accepted history proceeds to the
+    # early deterministic safety screen.
+    g.add_conditional_edges(
+        "transcript_gate",
+        _route_after_transcript,
+        {"retry": "transcript_gate", "early_safety": "early_safety"},
+    )
+    # Early deterministic safety screen: accepted history → RED routes
+    # straight to emergency without waiting for enrichment.
+    g.add_conditional_edges(
+        "early_safety",
+        _route_after_early_safety,
+        {"emergency": "emergency", "intake_gate": "intake_gate", "structure": "structure"},
+    )
+    g.add_edge("intake_gate", "structure")
     # Parallel fan-out after structure
     g.add_edge("structure", "triage")
     g.add_edge("structure", "vision")
@@ -282,8 +333,20 @@ def start_case(encounter_id: str, actor: ActorContext,
              audio_artifact_id: str | None = None,
              image_artifact_id: str | None = None,
              checkpoint_db: str = "smartsehat_checkpoints.db",
-             media_store: PrivateMediaStore | None = None):
-    """Start an already-owned consultation encounter."""
+             media_store: PrivateMediaStore | None = None,
+             intake_required: bool = False,
+             typed_complaint: str | None = None,
+             stt_language: str | None = None):
+    """Start an already-owned consultation encounter.
+
+    ``intake_required`` enables the regional guided structured-intake journey
+    (pathway confirmation + adaptive questions + vitals) after history
+    acceptance; the pre-existing protocol (which skips that step) is used when
+    it is False so test_flow and the legacy app path are unchanged.
+    ``typed_complaint`` seeds the provenance model when the worker types the
+    complaint directly (no audio). ``stt_language`` records the declared
+    language for provenance.
+    """
     encounter = access.get_encounter(actor, encounter_id, "encounter:resume")
     if encounter.workflow_type != "consultation":
         raise ValueError("Encounter is not a Consultation encounter.")
@@ -308,7 +371,12 @@ def start_case(encounter_id: str, actor: ActorContext,
         "chronic_conditions": patient.chronic_conditions or [],
         "medication_context": context,
         "clinical_context_snapshot": encounter.snapshot.to_dict(),
+        "intake_required": intake_required,
     }
+    if isinstance(typed_complaint, str) and typed_complaint.strip():
+        initial["typed_complaint"] = typed_complaint.strip()
+    if isinstance(stt_language, str) and stt_language.strip():
+        initial["stt_language"] = stt_language.strip()
     if force_triage:
         initial["force_triage"] = force_triage
     if audio_path:
@@ -327,7 +395,10 @@ def run_case(patient_id: str, actor: ActorContext,
              force_triage: str | None = None, audio_path: str | None = None,
              image_path: str | None = None, checkpoint_db: str = "smartsehat_checkpoints.db",
              medication_context: dict | None = None,
-             media_store: PrivateMediaStore | None = None):
+             media_store: PrivateMediaStore | None = None,
+             intake_required: bool = False,
+             typed_complaint: str | None = None,
+             stt_language: str | None = None):
     """Compatibility helper: create, snapshot, privately copy fixtures, then start."""
     encounter = access.create_encounter(actor, "consultation", patient_id=patient_id)
     if medication_context is not None:
@@ -343,8 +414,37 @@ def run_case(patient_id: str, actor: ActorContext,
                                original_filename=image_path, purpose="xray_image", modality_confirmed=True)
         image_id = artifact["artifact_id"]
     result = start_case(encounter.encounter_id, actor, force_triage, audio_id, image_id,
-                        checkpoint_db, store)
+                        checkpoint_db, store, intake_required=intake_required,
+                        typed_complaint=typed_complaint, stt_language=stt_language)
     return encounter.encounter_id, encounter.encounter_id, result
+
+
+def _persist_finalized_clinical_evidence(actor: ActorContext, thread_id: str,
+                                         graph: Any, config: dict) -> None:
+    """Persist accepted history / observations / pathway / triage into the
+    canonical clinical snapshot on graph completion.
+
+    Runs through the same access-layer write path used elsewhere (authorized,
+    optimistic-locked, versioned) so the accepted evidence survives resume and
+    is visible to the app. It is a single append; older snapshots are kept.
+    """
+    current = graph.get_state(config)
+    state = current.values if hasattr(current, "values") else current
+    accepted_history = (state.get("history") or {}) if isinstance(state, dict) else {}
+    if isinstance(accepted_history, dict) and accepted_history.get("status") != "ACCEPTED":
+        return
+    try:
+        access.update_clinical_snapshot(
+            actor, thread_id,
+            history=accepted_history if isinstance(accepted_history, dict) and accepted_history else None,
+            observations=state.get("observations") or None,
+            pathway=state.get("pathway_selection") or None,
+            triage=state.get("triage_assessment") or None,
+        )
+    except (ValueError, PermissionError):
+        # The access layer already raised a truthful error for the caller;
+        # a concurrent context change must not be silently overwritten.
+        raise
 
 
 def resume_case(thread_id: str, actor: ActorContext, action: str, modified_content: str | None = None,
@@ -352,14 +452,25 @@ def resume_case(thread_id: str, actor: ActorContext, action: str, modified_conte
                 checkpoint_db: str = "smartsehat_checkpoints.db",
                 proposed_medicines: list[dict] | None = None,
                 medication_context: dict | None = None,
-                medication_review_acknowledged: bool = False):
+                medication_review_acknowledged: bool = False,
+                intake_payload: dict[str, Any] | None = None,
+                correction_confirmed: bool | None = None,
+                correction_reason: str | None = None):
     """Resume a suspended graph.
 
     - Transcript gate uses {"action":"confirm","transcript": <edited text>}
+      and, when the worker's correction removes configured critical evidence,
+      {"critical_evidence_removal_acknowledged": True, "correction_reason": str}
+    - Intake gate uses {"action":"submit_intake"|"acknowledge_unsupported",
+      "selected_pathway_id", "pathway_confirmed", "answers"} via ``intake_payload``
     - HITL gates use {"action":"approve"|"modify"|"reject", ...}
     """
     access.record_resume(actor, thread_id)
     payload: dict[str, Any] = {"action": action, "_actor_id": actor.actor_id}
+    if correction_confirmed is not None:
+        payload["critical_evidence_removal_acknowledged"] = correction_confirmed
+    if correction_reason is not None:
+        payload["correction_reason"] = correction_reason
     if modified_content is not None:
         payload["modified_content"] = modified_content
     if reason is not None:
@@ -370,6 +481,8 @@ def resume_case(thread_id: str, actor: ActorContext, action: str, modified_conte
         payload["proposed_medicines"] = proposed_medicines
     if medication_context is not None and action != "update_context":
         raise ValueError("Patient context can only be changed with update_context.")
+    if intake_payload is not None:
+        payload.update(intake_payload)
     payload["medication_review_acknowledged"] = medication_review_acknowledged
     with graph_with_checkpointer(checkpoint_db) as graph:
         config = {"configurable": {"thread_id": thread_id}}
@@ -378,6 +491,8 @@ def resume_case(thread_id: str, actor: ActorContext, action: str, modified_conte
             raise ValueError("Transcript confirmation is not pending for this encounter.")
         if action != "confirm" and "transcript_gate" in pending:
             raise ValueError("Confirm the transcript before submitting a clinical review action.")
+        if action in {"submit_intake", "acknowledge_unsupported"} and "intake_gate" not in pending:
+            raise ValueError("Structured intake is not pending for this encounter.")
         if medication_context is not None:
             if not pending.intersection({"hitl_gate", "hitl_gate_post"}):
                 raise ValueError("Patient context can only change at a clinical review gate.")
@@ -387,6 +502,8 @@ def resume_case(thread_id: str, actor: ActorContext, action: str, modified_conte
             canonical = access.get_encounter(actor, thread_id).snapshot
             graph.update_state(config, {"medication_context": access.medication_context(canonical)})
         result = graph.invoke(Command(resume=payload), config)
+        if "__interrupt__" not in result:
+            _persist_finalized_clinical_evidence(actor, thread_id, graph, config)
     if "__interrupt__" not in result:
         access.mark_encounter_completed(actor, thread_id)
     return result

@@ -7,6 +7,8 @@ from typing import Any, Literal
 
 WorkflowType = Literal["consultation", "dawa"]
 IdentityKind = Literal["registered", "walk_in"]
+AssertionState = Literal["PRESENT", "ABSENT", "UNKNOWN", "UNASSESSED"]
+VerificationState = Literal["CONFIRMED", "UNCONFIRMED", "UNAVAILABLE"]
 
 
 @dataclass(frozen=True)
@@ -54,6 +56,7 @@ class PatientContext:
     display_reference: str
     facility_id: str
     age: float | None = None
+    age_unit: str | None = "years"
     weight_kg: float | None = None
     sex: str | None = None
     allergies: Any = None
@@ -72,6 +75,84 @@ class PatientContext:
 
 
 @dataclass(frozen=True)
+class TranscriptProvenance:
+    encounter_id: str
+    source: str
+    source_media_artifact_id: str | None
+    raw_text: str | None
+    corrected_text: str | None
+    accepted_text: str | None
+    declared_language: str | None
+    detected_language: str | None
+    provider: str | None
+    confidence: float | None
+    normalization: dict[str, Any]
+    confirming_actor_id: str | None
+    confirmed_at: str | None
+    version: int
+    status: str
+    degraded_reason: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ClinicalObservation:
+    observation_id: str
+    encounter_id: str
+    question_id: str
+    concept: str
+    value: Any
+    unit: str | None
+    normalized_value: Any
+    normalized_unit: str | None
+    assertion: AssertionState
+    source: str
+    entered_by: str
+    observed_at: str
+    verification_state: VerificationState
+    snapshot_version: int
+    definition_version: str
+    source_reference: str | None = None
+    evidence_span: dict[str, Any] | None = None
+    experiencer: str = "patient"
+    temporality: str = "current"
+    confirmed_by: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class PathwaySelection:
+    pathway_id: str | None
+    pathway_version: str
+    status: str
+    reason: str
+    selection_method: str
+    selected_by: str | None
+    selected_at: str | None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class TriageAssessment:
+    status: str
+    rule_version: str
+    findings: tuple[dict[str, Any], ...] = ()
+    unresolved_evidence: tuple[dict[str, Any], ...] = ()
+    missing_information: tuple[dict[str, Any], ...] = ()
+    limitations: tuple[str, ...] = ()
+    assessed_at: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
 class ClinicalContextSnapshot:
     snapshot_id: str
     encounter_id: str
@@ -79,6 +160,10 @@ class ClinicalContextSnapshot:
     captured_at: str
     captured_by: str
     patient: PatientContext
+    history: TranscriptProvenance | None = None
+    observations: tuple[ClinicalObservation, ...] = ()
+    pathway: PathwaySelection | None = None
+    triage: TriageAssessment | None = None
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)

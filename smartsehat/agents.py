@@ -31,6 +31,10 @@ from langgraph.types import interrupt
 
 from . import audit, corpus
 from .rules_triage import evaluate as triage_evaluate
+from .clinical_intake import (
+    accept_history, build_observations, captured_history, question_definitions,
+    recommend_pathway, relevant_questions, select_pathway,
+)
 from .state import PatientState
 from .medication_review import (
     NO_MEDICINES, draft_to_medicines, format_medicines,
@@ -42,6 +46,8 @@ from .emergency import build_emergency_protocol
 # Stub/real mode helpers
 # ----------------------------------------------------------------------
 
+# Stub mode only: an explicitly-labeled demo transcript that keeps the
+# offline/demo consultation flow deterministic. Real mode never uses this.
 _STUB_TRANSCRIPT = "مجھے پچھلے دو ہفتوں سے کھانسی ہے، رات کو پسینہ آتا ہے"
 
 
@@ -86,28 +92,62 @@ def _extract_json(text: str) -> dict | None:
 # ----------------------------------------------------------------------
 
 def stt_node(state: PatientState) -> dict[str, Any]:
-    # PATCH 1: real mode must never fall through to the canned stub
-    # transcript — that would inject fake TB symptoms into a live case.
-    if _mode() == "real":
-        if not state.get("audio_path"):
-            # No audio in real mode: the paramedic types the transcript at
-            # the confirmation gate. NEVER inject canned symptoms.
-            audit.log_event(state["case_id"], "STT_SKIPPED",
-                            {"reason": "no_audio_paramedic_will_type"}, provider="none")
-            return {"transcript": None}
+    typed = state.get("typed_complaint")
+    if isinstance(typed, str) and typed.strip():
+        history = captured_history(
+            state["case_id"], source="typed", source_media_artifact_id=None,
+            raw_text=typed, declared_language=state.get("stt_language"), provider="worker",
+        )
+        audit.log_event(state["case_id"], "HISTORY_CAPTURED",
+                        {"source": "typed", "status": history["status"]}, provider="worker")
+        return {"transcript": typed, "history": history}
+    # Real mode with audio: route through the provider chain. A total ASR
+    # failure produces an explicit degraded/unavailable history — never a
+    # canned fallback that could inject symptoms the patient did not state.
+    if state.get("audio_path") and _mode() == "real":
         try:
             text, spec = _router().route_transcribe("stt", state["audio_path"])
+            history = captured_history(
+                state["case_id"], source="audio",
+                source_media_artifact_id=state.get("audio_artifact_id"), raw_text=text,
+                declared_language=state.get("stt_language"), provider=spec,
+            )
             audit.log_event(state["case_id"], "STT_RESULT",
                             {"transcript": text}, provider=spec, confidence=None)
-            return {"transcript": text, "provider_used": {"stt": spec}}
+            return {"transcript": text, "history": history,
+                    "provider_used": {"stt": spec}}
         except Exception as e:
+            history = captured_history(
+                state["case_id"], source="audio",
+                source_media_artifact_id=state.get("audio_artifact_id"), raw_text=None,
+                declared_language=state.get("stt_language"), provider=None,
+                degraded_reason="stt_unavailable",
+            )
             audit.log_event(state["case_id"], "STT_FAILED",
                             {"error": str(e)}, provider="none")
-            return {"transcript": None, "degraded": "stt_unavailable"}
-    # Stub mode only — canned transcript, no API call.
-    audit.log_event(state["case_id"], "STT_RESULT",
-                    {"transcript": _STUB_TRANSCRIPT}, provider="stub", confidence=1.0)
-    return {"transcript": _STUB_TRANSCRIPT}
+            return {"transcript": None, "history": history, "degraded": "stt_unavailable"}
+    # Stub mode only — a canned demo transcript, no API call. This is the
+    # explicit demonstration path; it is never used in real mode where audio
+    # is missing or ASR fails (that path returns an UNAVAILABLE history above).
+    if _mode() != "real":
+        history = captured_history(
+            state["case_id"], source="audio" if state.get("audio_path") else "stub_demo",
+            source_media_artifact_id=state.get("audio_artifact_id"),
+            raw_text=_STUB_TRANSCRIPT, declared_language=state.get("stt_language"),
+            provider="stub", confidence=1.0,
+        )
+        audit.log_event(state["case_id"], "STT_RESULT",
+                        {"transcript": _STUB_TRANSCRIPT}, provider="stub", confidence=1.0)
+        return {"transcript": _STUB_TRANSCRIPT, "history": history}
+    # Real mode with no audio and no typed complaint: explicit degraded state.
+    history = captured_history(
+        state["case_id"], source="typed", source_media_artifact_id=None,
+        raw_text=None, declared_language=state.get("stt_language"), provider=None,
+        degraded_reason="typed_history_required",
+    )
+    audit.log_event(state["case_id"], "STT_SKIPPED",
+                    {"reason": history["degraded_reason"]}, provider="none")
+    return {"transcript": None, "history": history}
 
 
 # ----------------------------------------------------------------------
@@ -115,22 +155,98 @@ def stt_node(state: PatientState) -> dict[str, Any]:
 # ----------------------------------------------------------------------
 
 def transcript_gate(state: PatientState) -> dict[str, Any]:
-    original = state.get("transcript") or ""
+    history = state.get("history") or captured_history(
+        state["case_id"], source="typed", source_media_artifact_id=None,
+        raw_text=state.get("transcript"), declared_language=state.get("stt_language"), provider=None,
+    )
     resume = interrupt({
         "gate": "transcript",
         "case_id": state["case_id"],
-        "transcript": original,
+        "history": history,
+        "transcript": history.get("raw_text") or "",
+        "raw_text": history.get("raw_text"),
+        "corrected_text": history.get("corrected_text") or history.get("raw_text") or "",
+        "validation_error": state.get("history_validation_error"),
+        "critical_evidence_removed": state.get("critical_evidence_removed") or [],
     })
     resume_payload = resume if isinstance(resume, dict) else {}
-    confirmed = resume_payload.get("transcript") or original
+    if resume_payload.get("action") not in {"confirm_history", "confirm"}:
+        return {"history_validation_error": "Confirm the accepted history using the history confirmation action."}
+    corrected = (resume_payload["corrected_text"] if "corrected_text" in resume_payload
+                 else resume_payload.get("transcript"))
     decision_actor_id = resume_payload.get("_actor_id") or state.get("paramedic_id")
-    corrected = bool(original) and (confirmed != original)
+    accepted, error = accept_history(history, corrected, decision_actor_id)
+    if error:
+        return {"history_validation_error": error}
+
+    raw_text = history.get("raw_text")
+    removed: list[str] = []
+    if raw_text and raw_text.strip() != accepted["accepted_text"]:
+        raw_assessment = triage_evaluate({"case_id": state["case_id"], "history": {
+            **history, "accepted_text": raw_text, "status": "ACCEPTED"}})
+        accepted_assessment = triage_evaluate({"case_id": state["case_id"], "history": accepted})
+        if raw_assessment.get("status") == "RED" and accepted_assessment.get("status") != "RED":
+            removed = raw_assessment.get("triggered_rules") or []
+            if (resume_payload.get("critical_evidence_removal_acknowledged") is not True
+                    or not isinstance(resume_payload.get("correction_reason"), str)
+                    or len(resume_payload["correction_reason"].strip()) < 10):
+                return {
+                    "history_validation_error": (
+                        "The correction removes configured urgent evidence. Confirm that removal and record why."
+                    ),
+                    "critical_evidence_removed": removed,
+                }
     audit.log_event(state["case_id"], "VOICE_TRANSCRIPT_CONFIRMED",
-                    {"transcript": confirmed, "paramedic_corrected": corrected,
+                    {"transcript": accepted["accepted_text"],
+                     "raw_text": raw_text, "corrected_text": accepted["corrected_text"],
+                     "accepted_text": accepted["accepted_text"],
+                     "paramedic_corrected": raw_text != accepted["accepted_text"],
+                     "critical_evidence_removed": removed,
+                     "correction_reason": resume_payload.get("correction_reason"),
                      "actor_id": decision_actor_id},
                     provider="paramedic", confidence=1.0)
-    return {"transcript_confirmed": confirmed, "paramedic_corrected": corrected,
-            "decision_actor_id": decision_actor_id}
+    return {"history": accepted, "transcript_confirmed": accepted["accepted_text"],
+            "paramedic_corrected": raw_text != accepted["accepted_text"],
+            "decision_actor_id": decision_actor_id, "history_validation_error": None,
+            "critical_evidence_removed": removed}
+
+
+def intake_gate(state: PatientState) -> dict[str, Any]:
+    history = state.get("history") or {}
+    recommendation = recommend_pathway(history.get("accepted_text") or "")
+    patient = (state.get("clinical_context_snapshot") or {}).get("patient") or {}
+    current_answers = state.get("intake_answers") or {}
+    resume = interrupt({
+        "gate": "structured_intake", "case_id": state["case_id"],
+        "recommendation": recommendation,
+        "question_definitions": question_definitions(),
+        "relevant_questions": relevant_questions(current_answers, patient),
+        "answers": current_answers,
+        "validation_error": state.get("intake_validation_error"),
+        "early_triage": state.get("triage_assessment"),
+    })
+    payload = resume if isinstance(resume, dict) else {}
+    actor_id = payload.get("_actor_id") or state.get("paramedic_id")
+    selection, error = select_pathway(recommendation, payload, actor_id)
+    if error:
+        return {"intake_validation_error": error}
+    if selection.get("status") == "UNSUPPORTED_SCOPE":
+        observations: list[dict[str, Any]] = []
+    else:
+        if not isinstance(payload.get("answers"), dict):
+            return {"intake_validation_error": "Structured question answers are required."}
+        version = int((state.get("clinical_context_snapshot") or {}).get("version") or 0) + 1
+        observations, errors = build_observations(
+            payload["answers"], patient, actor_id, version, state["case_id"],
+        )
+        if errors:
+            return {"intake_validation_error": " ".join(errors),
+                    "intake_answers": payload["answers"]}
+    audit.log_event(state["case_id"], "STRUCTURED_INTAKE_CONFIRMED",
+                    {"pathway": selection, "observation_count": len(observations)},
+                    provider="authenticated-worker")
+    return {"pathway_selection": selection, "observations": observations,
+            "intake_answers": payload.get("answers") or {}, "intake_validation_error": None}
 
 
 # ----------------------------------------------------------------------
@@ -206,14 +322,42 @@ def structure_node(state: PatientState) -> dict[str, Any]:
 # Triage — deterministic rules in real mode; canned stub in stub mode
 # ----------------------------------------------------------------------
 
+def early_safety_node(state: PatientState) -> dict[str, Any]:
+    """Deterministic early safety screen immediately after accepted history.
+
+    A supported RED condition is routed straight to the emergency protocol,
+    without waiting for structure extraction, image analysis or LLM reasoning
+    (A05 / CLIN-005). Later model output can never downgrade this result —
+    the emergency path is chosen here and the graph never reaches reasoning.
+    """
+    r = triage_evaluate(state)
+    payload = {"triage_level": r.get("status"), "status": r.get("status"),
+               "rules": r.get("triggered_rules") or [], "findings": r.get("findings") or [],
+               "missing_information": r.get("missing_information") or [],
+               "unresolved_evidence": r.get("unresolved_evidence") or [],
+               "limitations": r.get("limitations") or [],
+               "rule_version": r.get("rule_version"), "input_hash": r.get("input_hash"),
+               "instruction": r.get("instruction", ""), "engine": "local-rules"}
+    audit.log_event(state["case_id"], "EARLY_SAFETY_SCREEN", payload,
+                    provider="local-rules", confidence=None)
+    return {"triage_level": r.get("status"), "triage_assessment": r,
+            "triage_rules": r.get("triggered_rules") or []}
+
+
 def triage_node(state: PatientState) -> dict[str, Any]:
     # The same deterministic rules run in demo and real modes.
     r = triage_evaluate(state)
-    payload = {"triage_level": r["level"], "rules": r["triggered_rules"],
-               "instruction": r["instruction"], "engine": "local-rules"}
+    payload = {"triage_level": r.get("status"), "status": r.get("status"),
+               "rules": r.get("triggered_rules") or [], "findings": r.get("findings") or [],
+               "missing_information": r.get("missing_information") or [],
+               "unresolved_evidence": r.get("unresolved_evidence") or [],
+               "limitations": r.get("limitations") or [],
+               "rule_version": r.get("rule_version"), "input_hash": r.get("input_hash"),
+               "instruction": r.get("instruction", ""), "engine": "local-rules"}
     audit.log_event(state["case_id"], "TRIAGE_DECISION", payload,
                     provider="local-rules", confidence=None)
-    return {"triage_level": r["level"], "triage_rules": r["triggered_rules"]}
+    return {"triage_level": r.get("status"), "triage_rules": r.get("triggered_rules") or [],
+            "triage_assessment": r}
 
 
 # ----------------------------------------------------------------------

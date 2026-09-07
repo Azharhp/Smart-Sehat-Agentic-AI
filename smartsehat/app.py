@@ -33,6 +33,10 @@ from smartsehat.medication_ui import medication_editor, patient_context_editor, 
 from smartsehat.auth import DemoAuthenticationProvider, get_authentication_provider
 from smartsehat.domain import ActorContext
 from smartsehat import access, ui_state
+from smartsehat import clinical_intake as intake
+from smartsehat.intake_ui import (
+    complaint_editor, history_review, intake_editor, render_assessment,
+)
 from smartsehat.media import MediaValidationError, PrivateMediaStore
 
 st.set_page_config(page_title="SmartSehat", layout="wide")
@@ -321,6 +325,30 @@ def _hitl_card(case_id: str, gate: dict) -> None:
     tl = gate.get("triage_level") or "—"
     color = {"RED": "🔴", "YELLOW": "🟡", "GREEN": "🟢"}.get(tl, "⚪")
     st.markdown(f"### {color} Triage: **{tl}**")
+    # Qualify the bare triage banner so a GREEN/no-flag level is never read as
+    # "healthy/safe". Truthfulness lives in the structured assessment below.
+    st.caption(
+        "Triage reflects only the configured rules that were assessed. A GREEN or "
+        "no-flag level does not establish that the patient is healthy or safe; see "
+        "the structured assessment below."
+    )
+
+    # Structured assessment card (regional demo). Rendered truthfully so
+    # "no configured flag" is never presented as "patient is safe".
+    if gate.get("triage_assessment") or gate.get("findings"):
+        render_assessment(gate.get("triage_assessment") or {
+            "status": gate.get("triage_level"),
+            "findings": gate.get("findings") or [],
+            "missing_information": gate.get("missing_information") or [],
+            "rule_version": gate.get("rule_version"),
+            "limitations": gate.get("limitations") or [],
+            "unresolved_evidence": gate.get("unresolved_evidence") or [],
+        }, {
+            "pathway_id": (gate.get("pathway_selection") or {}).get("pathway_id"),
+            "pathway_version": (gate.get("pathway_selection") or {}).get("pathway_version"),
+            "status": (gate.get("pathway_selection") or {}).get("status"),
+            "reason": (gate.get("pathway_selection") or {}).get("reason"),
+        })
 
     if gate.get("confidence") is not None:
         try:
@@ -671,8 +699,18 @@ def _consultation_tab(actor: ActorContext, selected_patient_id: str | None) -> N
     )
 
     if record["stage"] == "prepared":
+        st.subheader("Step 1 — Complaint")
         drafts = record["drafts"]
-        with st.expander("Attach encounter-owned inputs", expanded=True):
+        complaint = complaint_editor(drafts, f"complaint_{encounter.encounter_id}")
+        # Persist presentation drafts only when the worker actually staged a
+        # complaint; a fresh encounter must keep an empty draft bucket so
+        # Case A/B state isolation is preserved (test_unsaved_transcript_…).
+        if (complaint.get("typed_text") or "").strip() or complaint.get("source"):
+            ui_state.set_draft(st.session_state, "consultation", encounter.encounter_id,
+                               "complaint_draft", complaint)
+        typed_text = (complaint.get("typed_text") or "").strip() or None
+        staged_language = complaint.get("declared_language") or "unknown"
+        with st.expander("Attach encounter-owned inputs"):
             c1, c2 = st.columns(2)
             audio_key = f"audio_{encounter.encounter_id}"
             image_key = f"xray_{encounter.encounter_id}"
@@ -703,14 +741,22 @@ def _consultation_tab(actor: ActorContext, selected_patient_id: str | None) -> N
                 args=("consultation", encounter.encounter_id,
                       "xray_modality_confirmed", confirmation_key),
             )
-        if st.button("Start consultation workflow", type="primary"):
+        # Guided structured intake is the DEFAULT primary consultation action
+        # for the regional demo. The legacy unstructured workflow is preserved
+        # (functionally unchanged) inside a collapsed expander below so existing
+        # backward-compatible flows and tests keep working.
+        if st.button("Start guided consultation (structured intake)", type="primary"):
             try:
                 audio_id = _store_upload(store, actor, encounter.encounter_id, audio, "audio",
                                          retained=retained_audio)
                 image_id = _store_upload(store, actor, encounter.encounter_id, image,
                                          "xray_image", image_confirmed, retained_image)
-                result = start_case(encounter.encounter_id, actor,
-                                    audio_artifact_id=audio_id, image_artifact_id=image_id)
+                result = start_case(
+                    encounter.encounter_id, actor,
+                    audio_artifact_id=audio_id, image_artifact_id=image_id,
+                    intake_required=True, typed_complaint=typed_text,
+                    stt_language=staged_language,
+                )
                 stage, gate = _stage_from_result(result, "transcript")
                 ui_state.update(st.session_state, "consultation", encounter.encounter_id,
                                 stage=stage, gate=gate)
@@ -723,6 +769,29 @@ def _consultation_tab(actor: ActorContext, selected_patient_id: str | None) -> N
                 st.rerun()
             except (MediaValidationError, PermissionError, ValueError) as exc:
                 st.error(str(exc))
+        with st.expander("Developer / legacy consultation path", expanded=False):
+            st.caption("Legacy unstructured workflow kept for backward compatibility. "
+                       "The guided structured intake above is the recommended default.")
+            if st.button("Start consultation workflow"):
+                try:
+                    audio_id = _store_upload(store, actor, encounter.encounter_id, audio, "audio",
+                                             retained=retained_audio)
+                    image_id = _store_upload(store, actor, encounter.encounter_id, image,
+                                             "xray_image", image_confirmed, retained_image)
+                    result = start_case(encounter.encounter_id, actor,
+                                        audio_artifact_id=audio_id, image_artifact_id=image_id)
+                    stage, gate = _stage_from_result(result, "transcript")
+                    ui_state.update(st.session_state, "consultation", encounter.encounter_id,
+                                    stage=stage, gate=gate)
+                    ui_state.set_draft(st.session_state, "consultation", encounter.encounter_id,
+                                       "media", {"audio": audio_id, "xray": image_id})
+                    ui_state.set_draft(st.session_state, "consultation", encounter.encounter_id,
+                                       "pending_audio", None)
+                    ui_state.set_draft(st.session_state, "consultation", encounter.encounter_id,
+                                       "pending_xray", None)
+                    st.rerun()
+                except (MediaValidationError, PermissionError, ValueError) as exc:
+                    st.error(str(exc))
         return
 
     gate = record.get("gate") or {}
@@ -731,8 +800,14 @@ def _consultation_tab(actor: ActorContext, selected_patient_id: str | None) -> N
 
     def accept(result, reconcile_sources: set[str] | None = None):
         next_gate = _latest_gate_payload(result)
-        stage = ("transcript" if next_gate.get("gate") == "transcript"
-                 else "hitl" if next_gate else "done")
+        if next_gate.get("gate") == "transcript":
+            stage = "transcript"
+        elif next_gate.get("gate") == "structured_intake":
+            stage = "intake"
+        elif next_gate.get("gate"):
+            stage = "hitl"
+        else:
+            stage = "done"
         ui_state.update(st.session_state, "consultation", encounter.encounter_id,
                         stage=stage, gate=next_gate)
         ui_state.reconcile_gate_drafts(
@@ -742,7 +817,19 @@ def _consultation_tab(actor: ActorContext, selected_patient_id: str | None) -> N
         st.rerun()
 
     if record["stage"] == "transcript":
+        st.subheader("Step 2 — History")
         st.warning("Complete the history, then confirm")
+        history_gate = gate.get("history") or {}
+        # Show RAW / CORRECTED provenance as read-only captions (non-widgets,
+        # so the legacy editable transcript input below is unchanged). The
+        # original ASR/typed text must never be silently overwritten.
+        with st.expander("Original (RAW) & correction provenance", expanded=False):
+            st.markdown("**RAW — original source text**")
+            raw_text = history_gate.get("raw_text") or gate.get("raw_text") or ""
+            st.text(raw_text if raw_text.strip() else "(no original text recorded)")
+            st.caption(f"Source: {history_gate.get('source') or 'not recorded'} · "
+                       f"Language: {history_gate.get('declared_language') or history_gate.get('detected_language') or 'not recorded'} · "
+                       f"Version: {history_gate.get('version') or 'not recorded'}")
         transcript_key = f"transcript_{encounter.encounter_id}"
         edited = st.text_area(
             "Transcript — editable",
@@ -763,9 +850,66 @@ def _consultation_tab(actor: ActorContext, selected_patient_id: str | None) -> N
             )
             if answer.strip():
                 answers.append(answer.strip())
-        if st.button("Confirm transcript + answers"):
+        critical_removed = gate.get("critical_evidence_removed") or []
+        if critical_removed:
+            st.error(
+                "The correction removes evidence that matched a configured "
+                "urgent rule. Confirm the removal and record why before continuing."
+            )
+            st.write("Affected rule(s): " + ", ".join(str(r) for r in critical_removed))
+            ack_key = f"critical_ack_{encounter.encounter_id}"
+            ack = st.checkbox(
+                "I confirm the removal of the urgent evidence and will arrange review",
+                value=record["drafts"].get("critical_removal_ack", False),
+                key=ack_key, on_change=_remember_widget,
+                args=("consultation", encounter.encounter_id, "critical_removal_ack", ack_key),
+            )
+            reason_key = f"critical_reason_{encounter.encounter_id}"
+            reason = st.text_area(
+                "Reason for correcting the transcript (required)",
+                value=record["drafts"].get("critical_removal_reason", ""),
+                key=reason_key, on_change=_remember_widget,
+                args=("consultation", encounter.encounter_id, "critical_removal_reason", reason_key),
+            )
+            if st.button("Confirm transcript + answers (urgent-evidence removal reviewed)"):
+                full = edited + (("\n" + " ".join(answers)) if answers else "")
+                accept(resume_case(
+                    encounter.encounter_id, actor, action="confirm", transcript=full,
+                    correction_confirmed=bool(ack), correction_reason=reason.strip(),
+                ))
+            else:
+                st.info("Confirming the transcript without reviewing the urgent-evidence removal is not allowed.")
+        elif st.button("Confirm transcript + answers"):
             full = edited + (("\n" + " ".join(answers)) if answers else "")
             accept(resume_case(encounter.encounter_id, actor, action="confirm", transcript=full))
+    elif record["stage"] == "intake":
+        st.subheader("Step 3 — Assessment")
+        recommendation = gate.get("recommendation") or {}
+        patient_snapshot = encounter.snapshot.patient
+        patient_dict = {
+            "age": patient_snapshot.age, "age_unit": patient_snapshot.age_unit,
+            "sex": patient_snapshot.sex, "pregnant": patient_snapshot.pregnant,
+        }
+        action = intake_editor(recommendation, patient_dict, record["drafts"],
+                               f"intake_{encounter.encounter_id}")
+        if gate.get("validation_error"):
+            st.error(gate["validation_error"])
+        if gate.get("early_triage"):
+            render_assessment(gate["early_triage"], {
+                "pathway_id": (gate.get("recommendation") or {}).get("pathway_id"),
+                "pathway_version": (gate.get("recommendation") or {}).get("pathway_version"),
+                "status": (gate.get("recommendation") or {}).get("status"),
+            })
+        if action and action.get("action") in {"submit_intake", "acknowledge_unsupported"}:
+            payload = dict(action)
+            action_name = payload.pop("action")
+            try:
+                accept(resume_case(
+                    encounter.encounter_id, actor, action=action_name,
+                    intake_payload=payload,
+                ))
+            except ValueError as exc:
+                st.error(str(exc))
     elif record["stage"] == "hitl":
         st.warning("Health worker gate — authenticated decision required")
         _hitl_card(encounter.encounter_id, gate)

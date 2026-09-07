@@ -1,20 +1,38 @@
-"""Provider-agnostic inference router — Day 2 (Qwen-ASR fallback edition).
+"""Provider-agnostic inference router — final chain configuration.
 
-Carried fixes:
-- Bug #2: when ALL providers in a route fail, the router RAISES instead of
-  returning an error string disguised as model output. Agents handle
-  failure explicitly (degraded mode), never treat it as a clinical answer.
-- Qwen endpoint from config.yaml (config discipline), known-good default.
+Every role now has deep fallback chains across five providers, with both
+free AIHubMix models (gemini-3.8-flash-free, gemini-3.7-flash-free) as
+fallback tiers in STT, vision, and reasoning.
 
-This version:
-- STT chain is now gemini primary -> qwen3-asr-flash fallback (per our
-  bake-off: both 0.93 Urdu recall; whisper-large-v3 measured worst at
-  0.67 and is removed from the chain).
-- QwenProvider.transcribe() implemented against the NATIVE DashScope
-  multimodal-generation shape (bake-off caveat #3: the OpenAI-compatible
-  audio endpoint rejects qwen3-asr models; no 'language' parameter).
-- 503/overloaded handling: one quick retry (2s pause) before giving a
-  provider up — demand spikes are often seconds-long.
+STT chain (all probe-verified live on tb_cough_fever.wav AND
+pregnancy_dawa.wav — full Urdu-script transcripts):
+  1. AIHubMix gemini-3.8-flash-free (free)   — verified: perfect Urdu
+  2. AIHubMix gemini-3.7-flash-free (free)   — sibling model, same API
+  3. Google AI Studio gemini-3.6-flash       — proven Days 2-4
+  4. TokenHarbor mimo-v2.5:free              — verified Urdu (one-letter
+     slip on the pregnancy clip tolerated by the triage keyword floor
+     and corrected at the transcript confirmation gate)
+  5. Qwen qwen3-asr-flash (native DashScope) — verified; may emit
+     Devanagari for Urdu speech. Per A03 the ORIGINAL ASR text is returned
+     verbatim as immutable clinical evidence, so deterministic triage keeps
+     the Devanagari tokens; any script_utils.devanagari_to_urdu
+     transliteration is display-only and is NOT applied to the clinical
+     transcript or fed to triage.
+  6. Groq whisper-large-v3                    — last resort (0.67 bake-off
+     recall, kept for total-failure coverage)
+
+Carried laws:
+- Bug #2: when ALL providers in a route fail, the router RAISES —
+  never an error string disguised as model output.
+- 503/overload: one quick retry (2s pause) before giving a provider up.
+- Language-aware STT: 'ur' | 'en' | 'hi' selects the transcription
+  prompt. The Qwen tier does NOT transliterate: per A03 its `language`
+  param is intentionally unused and the ORIGINAL ASR text is returned
+  verbatim (any devanagari_to_urdu conversion is display-only, never
+  applied to the clinical transcript or triage).
+- Per-spec model selection: 'aihubmix/gemini-3.7-flash-free' binds the
+  cloned provider to that model id, so both free models serve as
+  distinct chain entries.
 """
 from __future__ import annotations
 import base64
@@ -72,6 +90,14 @@ def _is_transient_overload(e: Exception) -> bool:
             or "overloaded" in msg)
 
 
+# Language-aware STT prompts shared by Gemini-style providers.
+_STT_PROMPTS = {
+    "ur": "Transcribe this Urdu speech verbatim, in Urdu script. Output ONLY the transcript.",
+    "en": "Transcribe this speech verbatim, in English. Output ONLY the transcript.",
+    "hi": "Transcribe this Hindi speech verbatim, in Devanagari script. Output ONLY the transcript.",
+}
+
+
 class InferenceProvider(ABC):
     name: str = "base"
 
@@ -79,7 +105,7 @@ class InferenceProvider(ABC):
     def generate(self, messages: list[dict], temperature: float = 0.2) -> str: ...
 
     @abstractmethod
-    def transcribe(self, audio_path: str) -> str: ...
+    def transcribe(self, audio_path: str, language: str = "ur") -> str: ...
 
     @abstractmethod
     def vision(self, image_path: str, prompt: str, temperature: float = 0.2) -> str: ...
@@ -88,42 +114,93 @@ class InferenceProvider(ABC):
     def healthy(self) -> bool: ...
 
 
-class GroqProvider(InferenceProvider):
-    name = "groq"
+# ======================================================================
+# AIHubMix — Gemini-native proxy (both free models)
+# ======================================================================
 
-    def __init__(self, reasoning_model: str = "gpt-oss-120b", stt_model: str = "whisper-large-v3"):
-        # NOTE: whisper kept as a method only for standalone testing; it is
-        # NO LONGER in any role_route — the STT chain is gemini -> qwen.
-        self.reasoning_model = reasoning_model
-        self.stt_model = stt_model
-        self.api_key = os.getenv("GROQ_API_KEY")
+class AIHubMixProvider(InferenceProvider):
+    """AIHubMix — Gemini-native proxy (free gemini-3.8/3.7-flash).
+    Probe-verified live: full Urdu-script STT of both demo clips,
+    including code-switching. Audio via multimodal generate_content
+    against https://aihubmix.com/gemini."""
+    name = "aihubmix"
+
+    def __init__(self, model: str = "gemini-3.8-flash-free"):
+        self.model = model
+        self.api_key = os.getenv("AIHUBMIX_API_KEY")
         self._client = None
         if self.api_key:
             try:
-                from openai import OpenAI
-                self._client = OpenAI(api_key=self.api_key, base_url="https://api.groq.com/openai/v1")
+                from google import genai
+                self._client = genai.Client(
+                    api_key=self.api_key,
+                    http_options={"base_url": "https://aihubmix.com/gemini"})
             except Exception:
                 self._client = None
+
+    def with_model(self, model: str) -> "AIHubMixProvider":
+        """Return a shallow copy bound to a specific model id — lets the
+        router treat gemini-3.8-flash-free and gemini-3.7-flash-free as
+        separate chain entries on the same provider."""
+        clone = AIHubMixProvider.__new__(AIHubMixProvider)
+        clone.model = model
+        clone.api_key = self.api_key
+        clone._client = self._client
+        return clone
 
     def healthy(self) -> bool:
         return self._client is not None
 
-    def generate(self, messages: list[dict], temperature: float = 0.2) -> str:
+    def generate(self, messages, temperature: float = 0.2) -> str:
         if not self.healthy():
-            raise RuntimeError("Groq not configured")
-        r = self._client.chat.completions.create(model=self.reasoning_model, messages=messages, temperature=temperature)
-        return r.choices[0].message.content
-
-    def transcribe(self, audio_path: str) -> str:
-        if not self.healthy():
-            raise RuntimeError("Groq not configured")
-        with open(audio_path, "rb") as f:
-            r = self._client.audio.transcriptions.create(model=self.stt_model, file=f)
+            raise RuntimeError("AIHubMix not configured")
+        prompt = "\n".join(m.get("content", "") for m in messages)
+        r = self._client.models.generate_content(
+            model=self.model, contents=prompt,
+            config={"max_output_tokens": 4096})
         return r.text
 
-    def vision(self, image_path: str, prompt: str, temperature: float = 0.2) -> str:
-        raise RuntimeError("no vision on groq")
+    def transcribe(self, audio_path: str, language: str = "ur") -> str:
+        if not self.healthy():
+            raise RuntimeError("AIHubMix not configured")
+        from google.genai import types
+        with open(audio_path, "rb") as f:
+            audio_bytes = f.read()
+        part = types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav")
+        prompt = _STT_PROMPTS.get(language, _STT_PROMPTS["ur"])
+        r = self._client.models.generate_content(
+            model=self.model, contents=[part, prompt],
+            config={"max_output_tokens": 2048})
+        try:
+            return r.text
+        except Exception:
+            texts = []
+            for cand in (r.candidates or []):
+                for p in (getattr(cand.content, "parts", None) or []):
+                    t = getattr(p, "text", None)
+                    if t:
+                        texts.append(t)
+            if texts:
+                return "\n".join(texts)
+            raise RuntimeError(f"AIHubMix STT returned no text: {r}")
 
+    def vision(self, image_path: str, prompt: str, temperature: float = 0.2) -> str:
+        if not self.healthy():
+            raise RuntimeError("AIHubMix not configured")
+        from google.genai import types
+        with open(image_path, "rb") as f:
+            image_bytes = f.read()
+        part = types.Part.from_bytes(data=image_bytes,
+                                     mime_type=_image_mime(image_path))
+        r = self._client.models.generate_content(
+            model=self.model, contents=[part, prompt],
+            config={"max_output_tokens": 4096})
+        return r.text
+
+
+# ======================================================================
+# Google AI Studio — native Gemini
+# ======================================================================
 
 class GeminiProvider(InferenceProvider):
     name = "gemini"
@@ -146,20 +223,20 @@ class GeminiProvider(InferenceProvider):
         if not self.healthy():
             raise RuntimeError("Gemini not configured")
         prompt = "\n".join(m.get("content", "") for m in messages)
-        r = self._client.models.generate_content(model=self.model, contents=prompt)
+        r = self._client.models.generate_content(model=self.model,
+                                                 contents=prompt)
         return r.text
 
-    def transcribe(self, audio_path: str) -> str:
+    def transcribe(self, audio_path: str, language: str = "ur") -> str:
         if not self.healthy():
             raise RuntimeError("Gemini not configured")
         from google.genai import types
         with open(audio_path, "rb") as f:
             audio_bytes = f.read()
         part = types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav")
-        prompt = "Transcribe this Urdu speech verbatim, in Urdu script. Output ONLY the transcript."
-        r = self._client.models.generate_content(model=self.model, contents=[part, prompt])
-        # FIX: r.text can raise when the response has multiple parts /
-        # candidates. Extract text parts safely instead of crashing.
+        prompt = _STT_PROMPTS.get(language, _STT_PROMPTS["ur"])
+        r = self._client.models.generate_content(model=self.model,
+                                                 contents=[part, prompt])
         try:
             return r.text
         except Exception:
@@ -179,22 +256,85 @@ class GeminiProvider(InferenceProvider):
         from google.genai import types
         with open(image_path, "rb") as f:
             image_bytes = f.read()
-        part = types.Part.from_bytes(data=image_bytes, mime_type=_image_mime(image_path))
-        r = self._client.models.generate_content(model=self.model, contents=[part, prompt])
+        part = types.Part.from_bytes(data=image_bytes,
+                                     mime_type=_image_mime(image_path))
+        r = self._client.models.generate_content(model=self.model,
+                                                 contents=[part, prompt])
         return r.text
 
+
+# ======================================================================
+# TokenHarbor — mimo-v2.5:free (voice-capable)
+# ======================================================================
+
+class TokenHarborProvider(InferenceProvider):
+    """TokenHarbor — OpenAI-compatible endpoint, voice-capable Mimo.
+    Probe-verified live: Urdu-script STT of both clips; one-letter slip
+    on the pregnancy clip tolerated by the keyword floor + confirm gate.
+    deepseek-v4-flash:free also available as a text model."""
+    name = "tokenharbor"
+
+    def __init__(self, model: str = "mimo-v2.5:free"):
+        self.model = model
+        self.api_key = os.getenv("TOKENHARBOR_API_KEY")
+        self._client = None
+        if self.api_key:
+            try:
+                from openai import OpenAI
+                self._client = OpenAI(api_key=self.api_key,
+                                      base_url="https://tokenharbor.ai/v1")
+            except Exception:
+                self._client = None
+
+    def healthy(self) -> bool:
+        return self._client is not None
+
+    def generate(self, messages, temperature: float = 0.2) -> str:
+        if not self.healthy():
+            raise RuntimeError("TokenHarbor not configured")
+        r = self._client.chat.completions.create(
+            model=self.model, messages=messages, temperature=temperature)
+        return r.choices[0].message.content
+
+    def transcribe(self, audio_path: str, language: str = "ur") -> str:
+        # Probe-verified: audio via OpenAI-style input_audio parts;
+        # Urdu-script output natively.
+        if not self.healthy():
+            raise RuntimeError("TokenHarbor not configured")
+        import base64 as _b64
+        with open(audio_path, "rb") as f:
+            b64 = _b64.b64encode(f.read()).decode("ascii")
+        r = self._client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": [
+                {"type": "text",
+                 "text": _STT_PROMPTS.get(language, _STT_PROMPTS["ur"])},
+                {"type": "input_audio",
+                 "input_audio": {"data": b64, "format": "wav"}},
+            ]}],
+            max_tokens=2048)
+        return r.choices[0].message.content
+
+    def vision(self, image_path: str, prompt: str, temperature: float = 0.2) -> str:
+        raise RuntimeError("no vision on tokenharbor in this chain")
+
+
+# ======================================================================
+# Qwen — native DashScope ASR + vision/reasoning via OpenAI-compatible
+# ======================================================================
 
 class QwenProvider(InferenceProvider):
     name = "qwen"
     DEFAULT_ENDPOINT = "https://ws-ah8evok5ajq7vsm0.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
-    # Qwen3-ASR does NOT work via the OpenAI-compatible /audio endpoint
-    # (proven in our bake-off) — only the native DashScope
-    # multimodal-generation shape works, with no 'language' parameter.
-    DEFAULT_ASR_ENDPOINT = "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation"
+    # Qwen3-ASR does NOT work via the OpenAI-compatible /audio endpoint —
+    # only the native DashScope multimodal-generation shape works.
+    DEFAULT_ASR_ENDPOINT = "https://ws-ah8evok5ajq7vsm0.ap-southeast-1.maas.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation"
 
-    def __init__(self, reasoning_model: str = "qwen3-max", vision_model: str = "qwen3-vl-plus",
+    def __init__(self, reasoning_model: str = "qwen3-max",
+                 vision_model: str = "qwen3-vl-plus",
                  endpoint: str | None = None,
-                 asr_endpoint: str | None = None, asr_model: str | None = None):
+                 asr_endpoint: str | None = None,
+                 asr_model: str | None = None):
         self.reasoning_model = reasoning_model
         self.vision_model = vision_model
         self.endpoint = endpoint or self.DEFAULT_ENDPOINT
@@ -205,7 +345,8 @@ class QwenProvider(InferenceProvider):
         if self.api_key:
             try:
                 from openai import OpenAI
-                self._client = OpenAI(api_key=self.api_key, base_url=self.endpoint)
+                self._client = OpenAI(api_key=self.api_key,
+                                      base_url=self.endpoint)
             except Exception:
                 self._client = None
 
@@ -215,12 +356,22 @@ class QwenProvider(InferenceProvider):
     def generate(self, messages: list[dict], temperature: float = 0.2) -> str:
         if not self.healthy():
             raise RuntimeError("Qwen not configured")
-        r = self._client.chat.completions.create(model=self.reasoning_model, messages=messages, temperature=temperature)
+        r = self._client.chat.completions.create(
+            model=self.reasoning_model, messages=messages,
+            temperature=temperature)
         return r.choices[0].message.content
 
-    def transcribe(self, audio_path: str) -> str:
-        # FIX: native DashScope ASR path (bake-off caveat #3 — the
-        # OpenAI-compatible audio endpoint rejects qwen3-asr models).
+    def transcribe(self, audio_path: str, language: str = "ur") -> str:
+        # `language` is intentionally unused by the Qwen tier after A03; it is
+        # retained only for signature/contract stability with the other STT
+        # providers (the DashScope payload below sends no language hint).
+        # Native DashScope ASR path. Qwen3-ASR emits Devanagari for Urdu
+        # speech (bake-off caveat #4). SAFETY (A03): the string returned here
+        # becomes TranscriptProvenance.raw_text -> accepted_text, which the
+        # deterministic triage (rules_triage._haystack) reads. rules_triage
+        # already covers Devanagari tokens, so the ORIGINAL ASR text must be
+        # preserved verbatim. Any script conversion is display-only and must
+        # never feed triage.
         if not self.api_key:
             raise RuntimeError("Qwen not configured")
         import requests
@@ -236,7 +387,8 @@ class QwenProvider(InferenceProvider):
                     {
                         "role": "user",
                         "content": [
-                            {"type": "audio", "audio": f"data:{mime};base64,{b64}"},
+                            {"type": "audio",
+                             "audio": f"data:{mime};base64,{b64}"},
                         ],
                     }
                 ]
@@ -246,12 +398,20 @@ class QwenProvider(InferenceProvider):
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        resp = requests.post(self.asr_endpoint, json=payload, headers=headers, timeout=120)
+        resp = requests.post(self.asr_endpoint, json=payload,
+                             headers=headers, timeout=120)
         resp.raise_for_status()
         data = resp.json()
         for choice in (data.get("output", {}) or {}).get("choices", []):
             for part in (choice.get("message", {}) or {}).get("content", []):
                 if isinstance(part, dict) and part.get("text"):
+                    # A03 safety fix: return the ORIGINAL ASR text unchanged.
+                    # The previous lossy devanagari_to_urdu(text) conversion
+                    # produced broken mixed-script text that dropped the urgent
+                    # Devanagari evidence (e.g. सीने/दर्द/पसीना), silently
+                    # downgrading RED chest-pain emergencies to
+                    # NO_CONFIGURED_FLAG. Transliteration is display-only and is
+                    # deliberately NOT applied to the clinical transcript here.
                     return part["text"]
         raise RuntimeError(f"Qwen ASR returned no transcript: {str(data)[:300]}")
 
@@ -273,6 +433,54 @@ class QwenProvider(InferenceProvider):
         return r.choices[0].message.content
 
 
+# ======================================================================
+# Groq — whisper STT (last resort) + gpt-oss reasoning (primary)
+# ======================================================================
+
+class GroqProvider(InferenceProvider):
+    name = "groq"
+
+    def __init__(self, reasoning_model: str = "gpt-oss-120b",
+                 stt_model: str = "whisper-large-v3"):
+        self.reasoning_model = reasoning_model
+        self.stt_model = stt_model
+        self.api_key = os.getenv("GROQ_API_KEY")
+        self._client = None
+        if self.api_key:
+            try:
+                from openai import OpenAI
+                self._client = OpenAI(api_key=self.api_key,
+                                      base_url="https://api.groq.com/openai/v1")
+            except Exception:
+                self._client = None
+
+    def healthy(self) -> bool:
+        return self._client is not None
+
+    def generate(self, messages: list[dict], temperature: float = 0.2) -> str:
+        if not self.healthy():
+            raise RuntimeError("Groq not configured")
+        r = self._client.chat.completions.create(
+            model=self.reasoning_model, messages=messages,
+            temperature=temperature)
+        return r.choices[0].message.content
+
+    def transcribe(self, audio_path: str, language: str = "ur") -> str:
+        if not self.healthy():
+            raise RuntimeError("Groq not configured")
+        with open(audio_path, "rb") as f:
+            r = self._client.audio.transcriptions.create(
+                model=self.stt_model, file=f)
+        return r.text
+
+    def vision(self, image_path: str, prompt: str, temperature: float = 0.2) -> str:
+        raise RuntimeError("no vision on groq")
+
+
+# ======================================================================
+# The Router
+# ======================================================================
+
 class ModelRouter:
     def __init__(self, config: dict | None = None):
         self.config = config or load_config()
@@ -286,6 +494,8 @@ class ModelRouter:
                 asr_endpoint=endpoints.get("qwen_asr"),
                 asr_model=asr_cfg.get("qwen_model"),
             ),
+            "aihubmix": AIHubMixProvider(),
+            "tokenharbor": TokenHarborProvider(),
         }
 
     def _resolve(self, spec: str) -> InferenceProvider:
@@ -311,12 +521,18 @@ class ModelRouter:
         last_err: Exception | None = None
         for spec in chain:
             prov = self._resolve(spec)
+            # Per-spec model selection: 'aihubmix/gemini-3.7-flash-free'
+            # binds a provider clone to that specific model id, so both
+            # free AIHubMix models serve as distinct chain entries.
             try:
+                if prov.name == "aihubmix" and "/" in spec:
+                    prov = prov.with_model(spec.split("/", 1)[1])
                 return self._attempt(prov, op, *args, **kwargs), spec
             except Exception as e:
                 last_err = e
-                # 503 / overloaded: one quick retry (2s pause) before giving
-                # this provider up — demand spikes are often seconds-long.
+                # 503 / overloaded: one quick retry (2s pause) before
+                # giving this provider up — demand spikes are often
+                # seconds-long.
                 if _is_transient_overload(e):
                     time.sleep(2)
                     try:
@@ -324,17 +540,20 @@ class ModelRouter:
                     except Exception as e2:
                         last_err = e2
                 continue
-        # Bug #2 FIX: never return an error string disguised as model output.
-        # Callers must catch this and enter an explicit degraded mode.
+        # Never return an error string disguised as model output — callers
+        # must catch this and enter an explicit degraded mode.
         raise RuntimeError(f"All providers failed for role '{role}': {last_err}")
 
-    def route_generate(self, role: str, messages: list[dict], temperature: float = 0.2):
+    def route_generate(self, role: str, messages: list[dict],
+                       temperature: float = 0.2):
         return self._route(role, "generate", messages, temperature)
 
-    def route_transcribe(self, role: str, audio_path: str):
-        return self._route(role, "transcribe", audio_path)
+    def route_transcribe(self, role: str, audio_path: str,
+                         language: str = "ur"):
+        return self._route(role, "transcribe", audio_path, language)
 
-    def route_vision(self, role: str, image_path: str, prompt: str, temperature: float = 0.2):
+    def route_vision(self, role: str, image_path: str, prompt: str,
+                     temperature: float = 0.2):
         return self._route(role, "vision", image_path, prompt, temperature)
 
     def provider_health(self) -> dict[str, bool]:

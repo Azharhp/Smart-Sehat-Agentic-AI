@@ -6,7 +6,10 @@ import uuid
 from typing import Any
 
 from . import audit
-from .domain import ActorContext, ClinicalContextSnapshot, EncounterContext, PatientContext
+from .domain import (
+    ActorContext, ClinicalContextSnapshot, ClinicalObservation, EncounterContext,
+    PatientContext, PathwaySelection, TranscriptProvenance, TriageAssessment,
+)
 
 
 class AuthorizationError(PermissionError):
@@ -134,9 +137,21 @@ def create_encounter(actor: ActorContext, workflow_type: str, *, patient_id: str
 def _snapshot_from_json(value: str) -> ClinicalContextSnapshot:
     data = json.loads(value)
     patient = PatientContext(**data["patient"])
+    history = TranscriptProvenance(**data["history"]) if data.get("history") else None
+    observations = tuple(ClinicalObservation(**item) for item in data.get("observations") or [])
+    pathway = PathwaySelection(**data["pathway"]) if data.get("pathway") else None
+    triage = TriageAssessment(
+        status=data["triage"]["status"], rule_version=data["triage"]["rule_version"],
+        findings=tuple(data["triage"].get("findings") or []),
+        unresolved_evidence=tuple(data["triage"].get("unresolved_evidence") or []),
+        missing_information=tuple(data["triage"].get("missing_information") or []),
+        limitations=tuple(data["triage"].get("limitations") or []),
+        assessed_at=data["triage"].get("assessed_at"),
+    ) if data.get("triage") else None
     return ClinicalContextSnapshot(data["snapshot_id"], data["encounter_id"],
                                    data["version"], data["captured_at"],
-                                   data["captured_by"], patient)
+                                   data["captured_by"], patient, history,
+                                   observations, pathway, triage)
 
 
 def get_encounter(actor: ActorContext, encounter_id: str, permission: str = "encounter:read") -> EncounterContext:
@@ -220,6 +235,7 @@ def update_patient_snapshot(actor: ActorContext, encounter_id: str, medication_c
     old = encounter.snapshot.patient
     patient = replace(
         old, age=medication_context.get("age"),
+        age_unit=medication_context.get("age_unit", old.age_unit),
         weight_kg=medication_context.get("weight_kg"),
         sex=medication_context.get("sex", old.sex),
         allergies=medication_context.get("allergies"),
@@ -234,7 +250,11 @@ def update_patient_snapshot(actor: ActorContext, encounter_id: str, medication_c
     )
     version = encounter.patient_context_version + 1
     now, snapshot_id = audit._now(), f"SNAP-{uuid.uuid4().hex}"
-    snapshot = ClinicalContextSnapshot(snapshot_id, encounter_id, version, now, actor.actor_id, patient)
+    snapshot = ClinicalContextSnapshot(
+        snapshot_id, encounter_id, version, now, actor.actor_id, patient,
+        encounter.snapshot.history, encounter.snapshot.observations,
+        encounter.snapshot.pathway, encounter.snapshot.triage,
+    )
     payload = json.dumps(snapshot.to_dict(), ensure_ascii=False)
     conn = audit._connect()
     try:
@@ -252,9 +272,87 @@ def update_patient_snapshot(actor: ActorContext, encounter_id: str, medication_c
     return snapshot
 
 
+def update_clinical_snapshot(
+    actor: ActorContext, encounter_id: str, *, history: dict[str, Any] | None = None,
+    observations: list[dict[str, Any]] | None = None,
+    pathway: dict[str, Any] | None = None, triage: dict[str, Any] | None = None,
+    expected_version: int | None = None,
+) -> ClinicalContextSnapshot:
+    """Append an actor-owned clinical snapshot without mutating older evidence."""
+    encounter = authorize_mutation(actor, encounter_id)
+    old = encounter.snapshot
+    if expected_version is not None and old.version != expected_version:
+        raise ValueError("Clinical context changed; reload this encounter before submitting.")
+
+    patient = old.patient
+    next_observations = tuple(ClinicalObservation(**item) for item in observations) \
+        if observations is not None else old.observations
+    # Confirmed intake context feeds the existing medication review while
+    # retaining explicit unknown/unassessed states in the observations.
+    for item in next_observations:
+        if item.verification_state != "CONFIRMED":
+            continue
+        if item.concept == "age" and item.assertion == "PRESENT":
+            patient = replace(patient, age=item.value, age_unit=item.unit)
+        elif item.concept == "pregnancy":
+            pregnancy = True if item.assertion == "PRESENT" else False if item.assertion == "ABSENT" else None
+            patient = replace(patient, pregnant=pregnancy)
+        elif item.concept == "allergies":
+            allergy_value = item.value if item.assertion == "PRESENT" else [] if item.assertion == "ABSENT" else None
+            patient = replace(patient, allergies=allergy_value)
+        elif item.concept == "current_medicines":
+            medicine_value = item.value if item.assertion == "PRESENT" else [] if item.assertion == "ABSENT" else None
+            patient = replace(patient, current_medicines=medicine_value)
+
+    next_history = TranscriptProvenance(**history) if history is not None else old.history
+    next_pathway = PathwaySelection(**pathway) if pathway is not None else old.pathway
+    if triage is not None:
+        next_triage = TriageAssessment(
+            status=triage.get("status") or triage.get("level") or "UNASSESSED",
+            rule_version=triage.get("rule_version") or "unversioned",
+            findings=tuple(triage.get("findings") or []),
+            unresolved_evidence=tuple(triage.get("unresolved_evidence") or []),
+            missing_information=tuple(triage.get("missing_information") or []),
+            limitations=tuple(triage.get("limitations") or []),
+            assessed_at=triage.get("assessed_at"),
+        )
+    else:
+        next_triage = old.triage
+    version = old.version + 1
+    now, snapshot_id = audit._now(), f"SNAP-{uuid.uuid4().hex}"
+    # Observation provenance must point at the snapshot being written.
+    next_observations = tuple(replace(item, snapshot_version=version) for item in next_observations)
+    snapshot = ClinicalContextSnapshot(
+        snapshot_id, encounter_id, version, now, actor.actor_id, patient,
+        next_history, next_observations, next_pathway, next_triage,
+    )
+    payload = json.dumps(snapshot.to_dict(), ensure_ascii=False)
+    conn = audit._connect()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        current = conn.execute(
+            "SELECT patient_context_version FROM cases WHERE case_id=?", (encounter_id,),
+        ).fetchone()
+        if not current or int(current[0]) != old.version:
+            raise ValueError("Clinical context changed; reload this encounter before submitting.")
+        conn.execute("INSERT INTO patient_context_snapshots VALUES(?,?,?,?,?,?)",
+                     (snapshot_id, encounter_id, version, payload, actor.actor_id, now))
+        conn.execute(
+            "UPDATE cases SET patient_context_version=?,patient_snapshot_json=?,version=version+1,updated_at=? WHERE case_id=?",
+            (version, payload, now, encounter_id),
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return snapshot
+
+
 def medication_context(snapshot: ClinicalContextSnapshot) -> dict[str, Any]:
     p = snapshot.patient
-    return {"age": p.age, "weight_kg": p.weight_kg, "sex": p.sex,
+    return {"age": p.age, "age_unit": p.age_unit, "weight_kg": p.weight_kg, "sex": p.sex,
             "allergies": p.allergies,
             "current_meds": p.current_medicines, "vitals": p.vitals,
             "pregnant": p.pregnant, "gestational_weeks": p.gestational_weeks,

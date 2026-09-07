@@ -39,9 +39,9 @@ class PatientState(TypedDict, total=False):
     hitl_status: str  # pending | approved | modified | rejected
     hitl_action: str  # approve | modify | reject
     hitl_reason: str
+    force_triage: str  # test/demo hook; ONLY "RED" is honored (A10 — nothing can force a downgrade)
     provider_used: dict[str, str]
     audit_log: list[dict[str, Any]]
-    force_triage: str  # test hook to force triage level
     # Day-2 additions
     audio_path: str
     image_path: str
@@ -59,3 +59,16 @@ class PatientState(TypedDict, total=False):
     degraded: str                      # e.g. "reasoning_unavailable"
     # Language selector
     stt_language: str                  # ur | en | hi (speech-to-text language)
+    typed_complaint: str
+    history: dict[str, Any]
+    history_validation_error: str | None
+    critical_evidence_removed: list[str]
+    pathway_selection: dict[str, Any]
+    intake_answers: dict[str, Any]
+    intake_answers_raw: dict[str, Any]
+    observations: list[dict[str, Any]]
+    intake_validation_error: str | None
+    triage_assessment: dict[str, Any]
+    intake_required: bool                 # app-driven guided structured intake
+    intake_complete: bool                 # structured intake already confirmed
+    intake_pathway_status: str            # CONFIRMED | UNSUPPORTED_SCOPE | pending

@@ -1,9 +1,20 @@
 # SmartSehat — Consultation, Dawa Check, and District Dashboard
 
-SmartSehat is a clinical AI assistant for BHU-level health workers in rural
-Pakistan. It uses a LangGraph-based agent pipeline with deterministic-first
-triage and human-in-the-loop (HITL) gates to support safe, auditable
-clinical workflows.
+SmartSehat is AI-assisted frontline rural clinical workflow support for
+BHU-level health workers in rural Pakistan. It uses a LangGraph-based agent
+pipeline with deterministic-first triage and human-in-the-loop (HITL) gates to
+support safe, auditable clinical workflows. It is NOT an autonomous doctor,
+NOT an autonomous prescribing system, and NOT clinically validated for
+unsupervised deployment.
+
+SmartSehat turns an unstructured frontline patient conversation into a
+structured, evidence-backed assessment that can be reviewed, referred and
+handed off to a remote clinician. We do not replace doctors. We extend the
+reach of limited doctors.
+
+The regional prototype includes one structured respiratory/TB history pathway
+with deterministic safety escalation and explicit unsupported-scope behavior.
+It does not claim to support all respiratory medicine.
 
 ## Three Views
 
@@ -36,10 +47,12 @@ authorized through the encounter rather than exposed as a caller-supplied path.
 
 ### District View
 
-The District Health Officer receives a read-only dashboard backed by the
-immutable event ledger. It provides KPIs, cases per BHU, top diagnoses,
-HITL oversight with rubber-stamp and high-override flags, syndromic trend
-charts with automated outbreak alerts, and a facility map.
+The District Health Officer receives a read-only dashboard of synthetic/demo
+district analytics backed by the append-oriented auditable event history. It
+provides KPIs, cases per BHU, top diagnoses, HITL oversight with rubber-stamp
+and high-override flags, syndromic trend charts with rule-based outbreak flags
+(a regional, not-production demo signal — not clinically-validated automated
+outbreak detection), and a facility map.
 
 ## Quick Start
 
@@ -59,7 +72,7 @@ set DOTENV_DISABLED=1
 python -m streamlit run smartsehat/app.py
 ```
 
-The demo account selector is explicitly a local development identity provider.
+The demo account selector is explicitly a `demo-local` identity provider.
 It is not production authentication. Set `SMARTSEHAT_AUTH_MODE=production` to
 fail closed until a production identity provider is implemented. Worker,
 doctor/clinical-reviewer, and DHO permissions are checked in the service layer,
@@ -73,7 +86,7 @@ Runtime media defaults to `runtime/private-media` (gitignored). Override it with
 ## Tests
 
 ```bash
-python -m unittest discover -v  # 111 discovered: 110 pass, 1 live probe skipped
+python -m unittest discover -v  # 164 discovered: 163 pass, 1 live probe skipped
 python test_flow.py             # 35 consultation workflow checks
 python test_dawa.py             # 45 medication/Dawa checks
 python demo_medication_review.py
@@ -150,8 +163,8 @@ test_real.py      — paid live integration probe (requires SMARTSEHAT_RUN_LIVE=
 - 45 medication/Dawa tests plus the discoverable offline suite cover bounded
   rules, non-dismissable findings, stale receipt rejection, referral and ledger evidence.
 - Live API probes are opt-in and were not run as part of offline verification.
-- The district dashboard renders from the same immutable ledger; every
-  number is a query over append-only events.
+- The district dashboard renders from the same append-oriented auditable event
+  history; every number is a query over append-only events.
 
 The medication rules are a limited, source-backed prototype. Independent
 clinical/pharmacy validation and local formulary sign-off remain pending; see
