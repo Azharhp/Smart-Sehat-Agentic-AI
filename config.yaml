@@ -1,4 +1,4 @@
-agents: stub   # stub | real   (switch; stub keeps everything offline)
+agents: real   # stub | real   (switch; stub keeps everything offline)
 role_routes:
   stt: [gemini/gemini-3.6-flash, aihubmix/gemini-3.8-flash-free, tokenharbor/mimo-v2.5:free, qwen/qwen3-asr-flash, groq/whisper-large-v3]
   vision_rx: [qwen/qwen3-vl-plus, gemini/gemini-3.6-flash, aihubmix/gemini-3.8-flash-free]
