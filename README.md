@@ -1,4 +1,8 @@
-# SmartSehat — Consultation, Dawa Check, and District Dashboard
+# SmartSehat — Clear information. Better care.
+
+Clinical workflow support for frontline health workers and district health officers.
+
+[Design brief](Design.md) · [Medication evidence](docs/MEDICATION_EVIDENCE.md)
 
 SmartSehat is AI-assisted frontline rural clinical workflow support for
 BHU-level health workers in rural Pakistan. It uses a LangGraph-based agent
@@ -26,8 +30,8 @@ detection. Every structured medicine proposal is evaluated by the same bounded,
 source-linked rules used by Dawa Check; edits invalidate the prior receipt and
 run the review again. A health worker must approve, modify, or reject the plan.
 RED cases produce referral packets without invented drug orders, while an
-asynchronous doctor review loop supports telemedicine follow-up through
-WhatsApp.
+report can be shared through a WhatsApp link. Doctor advice is entered manually
+by the worker; doctor identity is not verified by this prototype.
 
 ### Dawa Check
 
@@ -54,6 +58,26 @@ and high-override flags, syndromic trend charts with rule-based outbreak flags
 (a regional, not-production demo signal — not clinically-validated automated
 outbreak detection), and a facility map.
 
+## Interface and reports
+
+- A welcome screen introduces Consultation, Dawa Check, and District Pulse,
+  with role-based demo sign-in from the sidebar.
+- Transparent SmartSehat branding, a dark sidebar, teal actions, readable clinical
+  cards, and responsive layouts replace raw JSON in the default presentation.
+- Encounter summaries and stage indicators keep the active patient and workflow
+  visible. Original and reviewed history are shown side by side.
+- The toolbar is separated from the scrolling workspace; sidebar controls have
+  explicit contrast and keyboard focus states.
+- Medication reviews, doctor handoffs, and emergency referrals offer a readable
+  **HTML report download**. Open the file and select **Print / Save as PDF** to
+  create a PDF through the browser. This preserves Unicode/Urdu text; it is not
+  a direct server-generated PDF download.
+- Medication evidence can also be downloaded as JSON. Clinical warnings,
+  unassessed checks, and human-review requirements remain part of the report.
+
+The [design brief](Design.md) covers the screen inventory and visual direction.
+Mockups inform the styling; they do not add unsupported clinical features.
+
 ## Quick Start
 
 ```bash
@@ -65,12 +89,25 @@ python -m streamlit run smartsehat/app.py
 
 For a guaranteed local demonstration with external providers disabled:
 
-```bash
-set SMARTSEHAT_OFFLINE=1
-set SMARTSEHAT_AUTH_MODE=demo
-set DOTENV_DISABLED=1
+PowerShell:
+
+```powershell
+$env:SMARTSEHAT_OFFLINE = "1"
+$env:SMARTSEHAT_AUTH_MODE = "demo"
+$env:DOTENV_DISABLED = "1"
 python -m streamlit run smartsehat/app.py
 ```
+
+Bash:
+
+```bash
+SMARTSEHAT_OFFLINE=1 SMARTSEHAT_AUTH_MODE=demo DOTENV_DISABLED=1 python -m streamlit run smartsehat/app.py
+```
+
+Select **Farid Khan · paramedic** for patient workflows or **District Officer
+(demo) · dho** for the district dashboard, then click **Start demo session**.
+`seed.py` creates both demo identities; `seed_district.py` populates the synthetic
+analytics. The committed configuration defaults to `agents: stub`.
 
 The demo account selector is explicitly a `demo-local` identity provider.
 It is not production authentication. Set `SMARTSEHAT_AUTH_MODE=production` to
@@ -86,7 +123,7 @@ Runtime media defaults to `runtime/private-media` (gitignored). Override it with
 ## Tests
 
 ```bash
-python -m unittest discover -v  # 164 discovered: 163 pass, 1 live probe skipped
+python -m unittest discover -v  # Offline regression suite; live probes are opt-in
 python test_flow.py             # 35 consultation workflow checks
 python test_dawa.py             # 45 medication/Dawa checks
 python demo_medication_review.py
@@ -94,24 +131,35 @@ python demo_medication_review.py
 
 ## Agent Modes
 
-Set `agents` in `config.yaml`:
+Set `agents` in `config.yaml`, or override it with `SMARTSEHAT_MODE`:
 
-- `agents: stub` — deterministic/manual demo operation with provider routing blocked.
-- `agents: real` — live model providers; add `GROQ_API_KEY`,
-  `GOOGLE_API_KEY`, and `DASHSCOPE_API_KEY` to `.env` (gitignored —
-  keys never enter the repository).
+- `stub` — deterministic/manual demo operation with external provider routing blocked.
+- `real` — live providers using keys from your local `.env` or environment:
+  `GOOGLE_API_KEY`, `AIHUBMIX_API_KEY`, `TOKENHARBOR_API_KEY`,
+  `DASHSCOPE_API_KEY`, and `GROQ_API_KEY`. Keys must remain outside Git.
 
-## Model Routes (bake-off winners)
+`SMARTSEHAT_OFFLINE=1` always forces stub mode. To enable real mode, remove that
+flag or set it to `0`, set `SMARTSEHAT_MODE=real`, and provide the needed keys.
+If relying on `.env`, remove `DOTENV_DISABLED=1` as well. Restart the app after
+changing mode or routes because configuration and routers are cached.
+Demo authentication remains a development-only identity mechanism in either mode.
 
-Selected by a 60-call live bake-off across Google, Alibaba, and Groq:
+## Model priorities
 
-- STT: `gemini-3.6-flash` primary → `qwen3-asr-flash` fallback
-- Vision (X-ray + prescriptions): `qwen3-vl-plus` primary → `gemini-3.6-flash` fallback
-- Reasoning: `gpt-oss-120b` (Groq) primary → `qwen3-max` fallback
+The shared router uses the following order from `config.yaml` for voice and
+agent workflows. Availability depends on each provider and configured credentials;
+these are configured model IDs, not a claim that every tier is currently available.
 
-All inference flows through a provider-agnostic router with automatic
-failover and 503-transient retry — demonstrated live when a provider
-outage occurred mid-build and the consultation completed uninterrupted.
+| Role | Priority order (first → last) |
+|---|---|
+| Voice / STT | `gemini/gemini-3.6-flash` → `aihubmix/gemini-3.8-flash-free` → `tokenharbor/mimo-v2.5:free` → `qwen/qwen3-asr-flash` → `groq/whisper-large-v3` |
+| Prescription vision | `qwen/qwen3-vl-plus` → `gemini/gemini-3.6-flash` → `aihubmix/gemini-3.8-flash-free` |
+| X-ray vision | `qwen/qwen3-vl-plus` → `gemini/gemini-3.6-flash` → `aihubmix/gemini-3.8-flash-free` |
+| Reasoning | `groq/gpt-oss-120b` → `qwen/qwen3-max` → `gemini/gemini-3.6-flash` → `aihubmix/gemini-3.8-flash-free` |
+
+Routing supports fallback and a short retry for transient overload errors.
+If every provider fails, the workflow reports degraded availability rather than
+presenting an error as clinical model output.
 
 ## Clinical Corpus
 
@@ -126,7 +174,9 @@ See `corpus/PROVENANCE.md` for the document-level audit trail.
 
 ```text
 smartsehat/
-  app.py          — Streamlit UI (3 tabs)
+  app.py          — Streamlit UI and role-based workflow navigation
+  presentation.py — welcome, theme, encounter header, readable HTML reports
+  intake_ui.py    — complaint, history review, and structured intake
   graph.py        — consultation LangGraph
   dawa_graph.py   — dawa check LangGraph
   medication_review.py — shared finite medication review rules
@@ -147,7 +197,7 @@ smartsehat/
   state.py        — PatientState TypedDict
 data/brand_generic_map.json — Pakistani brand→generic map
 corpus/chunks.json           — 27-chunk clinical corpus
-seed.py           — baseline seed (1 facility, 1 user, 1 patient)
+seed.py           — baseline seed (facility, worker + DHO accounts, patient)
 seed_district.py  — synthetic demo month (150 cases, 4 BHUs, labeled)
 tests/            — discoverable offline regression suite
 test_flow.py      — consultation workflow checks (35)

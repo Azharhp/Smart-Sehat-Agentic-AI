@@ -76,17 +76,20 @@ def history_review(history: dict, drafts: dict, key: str) -> dict | None:
     """Return ``{action: confirm, transcript: corrected}`` on explicit acceptance."""
     history = history or {}
     st.subheader("Step 2 — Review the patient history")
-    st.markdown("**RAW — original source text**")
-    raw = history.get("raw_text")
-    if isinstance(raw, str) and raw.strip():
-        st.text(raw)
-    else:
-        st.warning("Original text is unavailable. Enter the patient's statement manually before acceptance.")
-    if history.get("degraded_reason"):
-        st.warning(str(history["degraded_reason"]))
-    source = history.get("source") or "unknown"
-    language = history.get("declared_language") or history.get("detected_language") or "unknown"
-    st.caption(f"Source: {source} · Language: {language} · History version: {history.get('version', 'not recorded')}")
+    original_panel, review_panel = st.columns(2)
+    with original_panel:
+        with st.container(border=True):
+            st.markdown("**RAW — original source text**")
+            raw = history.get("raw_text")
+            if isinstance(raw, str) and raw.strip():
+                st.text(raw)
+            else:
+                st.warning("Original text is unavailable. Enter the patient's statement manually before acceptance.")
+            if history.get("degraded_reason"):
+                st.warning(str(history["degraded_reason"]))
+            source = history.get("source") or "unknown"
+            language = history.get("declared_language") or history.get("detected_language") or "unknown"
+            st.caption(f"Source: {source} · Language: {language} · History version: {history.get('version', 'not recorded')}")
     if history.get("status") == "ACCEPTED":
         st.markdown("**CORRECTED — worker-reviewed text**")
         st.text(history.get("corrected_text") or "Not recorded")
@@ -100,11 +103,14 @@ def history_review(history: dict, drafts: dict, key: str) -> dict | None:
     initial = history.get("corrected_text")
     if not isinstance(initial, str):
         initial = raw if isinstance(raw, str) else ""
-    corrected = st.text_area(
-        "CORRECTED — review and edit the statement",
-        value=drafts.get(draft_name, initial), key=corrected_key,
-        on_change=_remember, args=(drafts, draft_name, corrected_key),
-    )
+    with review_panel:
+        with st.container(border=True):
+            st.markdown("**Reviewed clinical statement**")
+            corrected = st.text_area(
+                "CORRECTED — review and edit the statement",
+                value=drafts.get(draft_name, initial), key=corrected_key,
+                on_change=_remember, args=(drafts, draft_name, corrected_key),
+            )
     st.caption("Acceptance records your confirmed text. The original source text is preserved.")
     if st.button("Accept this clinical history", key=f"{key}:accept_history",
                  type="primary", disabled=not corrected.strip()):

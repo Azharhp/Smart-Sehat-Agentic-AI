@@ -39,7 +39,10 @@ from smartsehat.intake_ui import (
 )
 from smartsehat.media import MediaValidationError, PrivateMediaStore
 
+from smartsehat.presentation import apply_theme, render_readable, download_report, brand, encounter_header, welcome
+
 st.set_page_config(page_title="SmartSehat", layout="wide")
+apply_theme()
 
 # Nearest-referral demo context
 FACILITIES = {
@@ -233,10 +236,12 @@ def _whatsapp_link(text: str) -> str:
 # ======================================================================
 
 def _sidebar() -> tuple[str | None, ActorContext]:
-    st.sidebar.title("SmartSehat")
+    with st.sidebar:
+        brand()
     st.sidebar.caption(f"Agents mode: **{_cfg().get('agents', 'stub')}**")
     actor_data = st.session_state.get("authenticated_actor")
     if not actor_data:
+        welcome()
         provider = get_authentication_provider()
         st.sidebar.warning("Development authentication — not a production identity provider.")
         if isinstance(provider, DemoAuthenticationProvider):
@@ -245,8 +250,10 @@ def _sidebar() -> tuple[str | None, ActorContext]:
                 st.sidebar.error("No demo accounts. Run `python seed.py` first.")
                 st.stop()
             labels = {f"{row['name']} · {row['role']}": row["user_id"] for row in accounts}
-            selected = st.sidebar.selectbox("Demo account", list(labels))
-            if st.sidebar.button("Start demo session"):
+            default_account = next((i for i, row in enumerate(accounts)
+                                    if row['role'] == 'paramedic'), 0)
+            selected = st.sidebar.selectbox("Demo account", list(labels), index=default_account)
+            if st.sidebar.button("Start demo session", type="primary"):
                 actor = provider.authenticate(labels[selected])
                 st.session_state["authenticated_actor"] = actor.to_dict()
                 st.rerun()
@@ -309,7 +316,8 @@ def _render_timeline(case_id: str, actor: ActorContext) -> None:
                 payload = json.loads(ev["payload_json"] or "{}")
             except Exception:
                 payload = {"raw": ev["payload_json"]}
-            cols[1].json(payload)
+            with cols[1]:
+                render_readable(payload)
 
 
 def _latest_gate_payload(result: dict) -> dict:
@@ -367,10 +375,10 @@ def _hitl_card(case_id: str, gate: dict) -> None:
                         f"({d.get('probability', '?')}) — _{cits}_")
     if gate.get("prescription_draft"):
         st.markdown("**Proposed medicine plan — human review required**")
-        st.code(gate["prescription_draft"], language="text")
+        render_readable(gate["prescription_draft"])
     if gate.get("management"):
         st.markdown("**Assessment and management draft**")
-        st.write(gate["management"])
+        render_readable(gate["management"])
         st.caption("Medicine instructions must be reconciled with the structured plan.")
     if gate.get("workup"):
         st.write("Suggested workup: " + "; ".join(str(x) for x in gate["workup"]))
@@ -409,7 +417,9 @@ def _review_inputs_changed(gate: dict, medicines: list[dict], context: dict) -> 
 def _download_review(case_id: str, report: dict, context: dict | None, workflow: str) -> None:
     receipt = {"case_id": case_id, "workflow": workflow,
                "patient_context": context, "review": report}
-    st.download_button("Download medication evidence receipt (JSON)",
+    download_report("Medication review", receipt, f"{case_id}-medication-review",
+                    f"{workflow}:{case_id}:report")
+    st.download_button("Download original data (JSON)",
                        json.dumps(receipt, ensure_ascii=False, indent=2),
                        file_name=f"{case_id}-medication-review.json", mime="application/json",
                        key=f"{workflow}:{case_id}:download")
@@ -500,7 +510,7 @@ def _create_ui_encounter(actor: ActorContext, workflow: str, patient_id: str | N
 # ======================================================================
 
 def _dawa_tab(actor: ActorContext, selected_patient_id: str | None) -> None:
-    st.title("Dawa Check — owned medicine reconciliation")
+    st.title("Dawa Check — medicine review")
     store = PrivateMediaStore()
     record = _encounter_picker("dawa", "Open Dawa encounter")
 
@@ -532,11 +542,7 @@ def _dawa_tab(actor: ActorContext, selected_patient_id: str | None) -> None:
             _create_ui_encounter(actor, "dawa", selected_patient_id)
             st.rerun()
 
-    st.info(
-        f"Encounter **{encounter.encounter_id}** · "
-        f"Patient **{encounter.patient_id or encounter.snapshot.patient.display_reference}** · "
-        f"Facility **{encounter.facility_id}** · Actor **{encounter.actor_id}**"
-    )
+    encounter_header(encounter, record["stage"], "dawa")
 
     if record["stage"] == "prepared":
         drafts = record["drafts"]
@@ -670,7 +676,7 @@ def _dawa_tab(actor: ActorContext, selected_patient_id: str | None) -> None:
 # ======================================================================
 
 def _consultation_tab(actor: ActorContext, selected_patient_id: str | None) -> None:
-    st.title("SmartSehat — owned consultation")
+    st.title("SmartSehat — patient consultation")
     store = PrivateMediaStore()
     record = _encounter_picker("consultation", "Open consultation encounter")
     if st.button("Create consultation encounter for selected patient", type="primary",
@@ -693,10 +699,7 @@ def _consultation_tab(actor: ActorContext, selected_patient_id: str | None) -> N
             st.rerun()
 
     patient_ref = encounter.patient_id or encounter.snapshot.patient.display_reference
-    st.info(
-        f"Encounter **{encounter.encounter_id}** · Patient **{patient_ref}** · "
-        f"Facility **{encounter.facility_id}** · Actor **{encounter.actor_id}**"
-    )
+    encounter_header(encounter, record["stage"])
 
     if record["stage"] == "prepared":
         st.subheader("Step 1 — Complaint")
@@ -796,7 +799,8 @@ def _consultation_tab(actor: ActorContext, selected_patient_id: str | None) -> N
 
     gate = record.get("gate") or {}
     if record["stage"] != "done":
-        _render_timeline(encounter.encounter_id, actor)
+        with st.expander("Evidence and decision timeline", expanded=False):
+            _render_timeline(encounter.encounter_id, actor)
 
     def accept(result, reconcile_sources: set[str] | None = None):
         next_gate = _latest_gate_payload(result)
@@ -976,12 +980,16 @@ def _consultation_tab(actor: ActorContext, selected_patient_id: str | None) -> N
                 for event in access.get_timeline(actor, encounter.encounter_id)):
             packet = _emergency_packet(encounter.encounter_id, actor)
             st.error("Emergency referral packet")
-            st.code(packet)
+            render_readable(packet)
+            download_report("Emergency referral", packet, f"{encounter.encounter_id}-referral",
+                            f"referral:{encounter.encounter_id}")
             st.markdown(f"**[Send via WhatsApp]({_whatsapp_link(packet)})**")
         else:
             report = _doctor_report(encounter.encounter_id, actor)
             with st.expander("Doctor review report", expanded=True):
-                st.code(report)
+                render_readable(report)
+                download_report("Doctor review report", report, f"{encounter.encounter_id}-report",
+                                f"doctor:{encounter.encounter_id}")
                 st.markdown(f"**[Send via WhatsApp]({_whatsapp_link(report)})**")
             reply_key = f"doc_reply_{encounter.encounter_id}"
             reply = st.text_area(

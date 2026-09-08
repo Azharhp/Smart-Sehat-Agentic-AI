@@ -31,3 +31,6 @@ runtime/
 .claude/worktrees/
 .DS_Store
 Thumbs.db
+
+# Machine-specific agent permissions
+.claude/settings.local.json

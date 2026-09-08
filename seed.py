@@ -23,6 +23,17 @@ def seed(path: str | None = None) -> None:
         _upsert(conn,
                 "INSERT OR REPLACE INTO user_facilities(user_id,bhu_id) VALUES (?,?)",
                 ("PM-2213", "BHU-0442"))
+        # Additive, idempotent District Health Officer demo identity so the
+        # gated "District View" dashboard is reachable. INSERT OR IGNORE keeps
+        # re-seeding non-destructive: it never overwrites existing rows and
+        # never drops encounters/media/ledger data. Role isolation is unchanged
+        # (dho capability `district:view` comes only from auth.ROLE_PERMISSIONS).
+        _upsert(conn,
+                "INSERT OR IGNORE INTO users (user_id, name, role, bhu_id) VALUES (?, ?, ?, ?)",
+                ("DHO-0001", "District Officer (demo)", "dho", "BHU-0442"))
+        _upsert(conn,
+                "INSERT OR IGNORE INTO user_facilities(user_id,bhu_id) VALUES (?,?)",
+                ("DHO-0001", "BHU-0442"))
         _upsert(conn,
                 "INSERT OR REPLACE INTO patients (patient_id, name, age, sex, chronic_conditions_json, allergies_json, bhu_id) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?)",

@@ -1,25 +1,16 @@
 """Provider-agnostic inference router — final chain configuration.
 
-Every role now has deep fallback chains across five providers, with both
-free AIHubMix models (gemini-3.8-flash-free, gemini-3.7-flash-free) as
-fallback tiers in STT, vision, and reasoning.
+Priority chains are configured in config.yaml and shared by voice and agents.
 
-STT chain (all probe-verified live on tb_cough_fever.wav AND
-pregnancy_dawa.wav — full Urdu-script transcripts):
-  1. AIHubMix gemini-3.8-flash-free (free)   — verified: perfect Urdu
-  2. AIHubMix gemini-3.7-flash-free (free)   — sibling model, same API
-  3. Google AI Studio gemini-3.6-flash       — proven Days 2-4
-  4. TokenHarbor mimo-v2.5:free              — verified Urdu (one-letter
-     slip on the pregnancy clip tolerated by the triage keyword floor
-     and corrected at the transcript confirmation gate)
-  5. Qwen qwen3-asr-flash (native DashScope) — verified; may emit
-     Devanagari for Urdu speech. Per A03 the ORIGINAL ASR text is returned
-     verbatim as immutable clinical evidence, so deterministic triage keeps
-     the Devanagari tokens; any script_utils.devanagari_to_urdu
-     transliteration is display-only and is NOT applied to the clinical
-     transcript or fed to triage.
-  6. Groq whisper-large-v3                    — last resort (0.67 bake-off
-     recall, kept for total-failure coverage)
+STT chain:
+  1. Google AI Studio gemini-3.6-flash
+  2. AIHubMix gemini-3.8-flash-free
+  3. TokenHarbor mimo-v2.5:free
+  4. Qwen qwen3-asr-flash (native DashScope)
+  5. Groq whisper-large-v3
+
+Prescription and X-ray vision: Qwen, Google Gemini, then AIHubMix.
+Reasoning: Groq, Qwen, Google Gemini, then AIHubMix.
 
 Carried laws:
 - Bug #2: when ALL providers in a route fail, the router RAISES —
@@ -30,9 +21,8 @@ Carried laws:
   param is intentionally unused and the ORIGINAL ASR text is returned
   verbatim (any devanagari_to_urdu conversion is display-only, never
   applied to the clinical transcript or triage).
-- Per-spec model selection: 'aihubmix/gemini-3.7-flash-free' binds the
-  cloned provider to that model id, so both free models serve as
-  distinct chain entries.
+- Per-spec model selection binds a cloned AIHubMix provider to the
+  model id selected in config.yaml.
 """
 from __future__ import annotations
 import base64
@@ -521,9 +511,7 @@ class ModelRouter:
         last_err: Exception | None = None
         for spec in chain:
             prov = self._resolve(spec)
-            # Per-spec model selection: 'aihubmix/gemini-3.7-flash-free'
-            # binds a provider clone to that specific model id, so both
-            # free AIHubMix models serve as distinct chain entries.
+            # Bind an AIHubMix provider clone to the configured model id.
             try:
                 if prov.name == "aihubmix" and "/" in spec:
                     prov = prov.with_model(spec.split("/", 1)[1])

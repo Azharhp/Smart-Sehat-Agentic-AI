@@ -166,7 +166,7 @@ class AppMedicationTests(unittest.TestCase):
                         str(self.app.session_state["consultation_encounters"]))
         self.button("Confirm emergency referral").click().run()
         self.assert_renders()
-        code = " ".join(item.value for item in self.app.code)
+        code = " ".join(item.value for item in self.app.markdown)
         self.assertIn("UNSUPPORTED_EMERGENCY_PROTOCOL", code)
         self.assertIn("emergency referral required", code)
         self.assertNotIn("aspirin 300", code.casefold())
