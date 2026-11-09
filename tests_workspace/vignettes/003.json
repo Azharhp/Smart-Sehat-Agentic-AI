@@ -1,0 +1,83 @@
+{
+  "name": "child-2m-rr-51",
+  "age": {
+    "value": 2,
+    "unit": "months",
+    "days": 61,
+    "display": "2 months = 0 years 2 months (61 days)",
+    "warning": "",
+    "pathway": "child"
+  },
+  "facts": [
+    {
+      "id": "F1",
+      "key": "cannot_drink",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F2",
+      "key": "vomits_everything",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F3",
+      "key": "convulsions",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F4",
+      "key": "lethargic",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F5",
+      "key": "cough",
+      "value": true,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F6",
+      "key": "resp_rate",
+      "value": 51,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F7",
+      "key": "spo2",
+      "value": 94,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F8",
+      "key": "weight",
+      "value": 10,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    }
+  ],
+  "pregnant": false,
+  "expected_urgency": "AMBER",
+  "expected_rule_ids": [
+    "RR-CH-01"
+  ],
+  "synthetic": true
+}

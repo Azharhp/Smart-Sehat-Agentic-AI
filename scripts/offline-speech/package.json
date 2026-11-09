@@ -1,0 +1,6 @@
+{
+  "name": "smartsehat-fixed-speech-helper",
+  "private": true,
+  "type": "module",
+  "dependencies": {"@echogarden/espeak-ng-emscripten": "0.3.5"}
+}

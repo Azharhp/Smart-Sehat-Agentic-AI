@@ -1,0 +1,83 @@
+{
+  "name": "child-14m-rr-40",
+  "age": {
+    "value": 14,
+    "unit": "months",
+    "days": 426,
+    "display": "14 months = 1 years 2 months (426 days)",
+    "warning": "",
+    "pathway": "child"
+  },
+  "facts": [
+    {
+      "id": "F1",
+      "key": "cannot_drink",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F2",
+      "key": "vomits_everything",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F3",
+      "key": "convulsions",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F4",
+      "key": "lethargic",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F5",
+      "key": "cough",
+      "value": true,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F6",
+      "key": "resp_rate",
+      "value": 40,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F7",
+      "key": "spo2",
+      "value": 94,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F8",
+      "key": "weight",
+      "value": 10,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    }
+  ],
+  "pregnant": false,
+  "expected_urgency": "AMBER",
+  "expected_rule_ids": [
+    "RR-CH-02"
+  ],
+  "synthetic": true
+}

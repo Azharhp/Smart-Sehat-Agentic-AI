@@ -1,0 +1,48 @@
+<!doctype html><html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{font:18px system-ui;margin:0;color:#12333a}#grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:10px}.card{border:2px solid #c6d5d8;border-radius:12px;padding:12px}.card.yes{border-color:#b91c1c;background:#fff1f2}.card.no{border-color:#0d7665}.card.unknown{border-color:#a96f00}img{width:90px;height:75px;float:right;object-fit:contain}h3{margin:0 0 8px;font-size:19px}p{margin:8px 0}button{font:inherit;padding:12px 6px;min-height:48px;cursor:pointer;border:1px solid #84999f;border-radius:8px;background:white;color:#12333a}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.choices button:first-child{color:#a21212}#status{padding:10px;font-weight:600}#stop{background:#fff1f2;color:#991b1b}small{display:block;margin:8px 0;color:#47616b}</style>
+<div id="status" role="status">Choose each answer. Any Yes sends the danger finding immediately.</div><div id="grid"></div><p><button id="previous">Previous / پچھلا</button> <button id="view">Show all / سب سوالات</button> <button id="stop">Stop audio / آواز بند</button></p><small>Prepared recordings can play without a speech service. Generated pronunciation and clinical review remain pending. Timing records browser interaction only.</small>
+<script>
+let args={},scope='',answers={},started=performance.now(),sent=false,player=null,current=0,mode='single';
+const emit=(type,extra={})=>parent.postMessage({isStreamlitMessage:true,type,...extra},'*');
+const frame=()=>emit('streamlit:setFrameHeight',{height:document.body.scrollHeight+12});
+function stopAudio(){if(player){player.pause();player=null;}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+function play(q){stopAudio();if(q.audio){player=new Audio(q.audio);player.play().catch(()=>{});return;}if(!window.speechSynthesis)return;const voices=window.speechSynthesis.getVoices().filter(v=>v.lang.toLowerCase().split('-')[0]===args.language.toLowerCase().split('-')[0]);if(!voices.length)return;const u=new SpeechSynthesisUtterance(q.spoken);u.voice=voices[0];u.lang=args.language;window.speechSynthesis.speak(u);}
+function choose(key,value){
+ if(sent)return;
+ answers[key]=value;
+ if(value===true||args.questions.every(q=>Object.hasOwn(answers,q.key))){
+  sent=true;stopAudio();
+  const positive=Object.values(answers).some(v=>v===true);
+  document.getElementById('status').textContent=positive?'DANGER REPORTED — arrange urgent care; do not wait to finish the interview. / خطرے کی علامت، فوری مدد کا انتظام کریں۔':'Answers sent for recording. Wait for the app to confirm. / جواب بھیج دیے گئے ہیں۔';
+  emit('streamlit:setComponentValue',{dataType:'json',value:{case_id:args.case_id,scope:args.scope,answers,elapsed_seconds:Math.round((performance.now()-started)/10)/100}});
+ }else{
+  stopAudio();current=args.questions.findIndex(q=>!Object.hasOwn(answers,q.key));
+ }
+ draw();
+}
+function draw(){
+ const grid=document.getElementById('grid');grid.replaceChildren();
+ const shown=mode==='all'?args.questions:[args.questions[current]];
+ if(!sent)document.getElementById('status').textContent=`Question ${current+1}/${args.questions.length} · ${Object.keys(answers).length} recorded. Any Yes reports immediately. / ہاں کا جواب فوراً بھیجا جائے گا۔`;
+ for(const q of shown){
+  const card=document.createElement('div');card.className='card'+(Object.hasOwn(answers,q.key)?answers[q.key]===true?' yes':answers[q.key]===false?' no':' unknown':'');
+  if(q.image){const img=document.createElement('img');img.src=q.image;img.alt=q.en;card.append(img);}
+  const en=document.createElement('h3');en.textContent=q.en;const ur=document.createElement('p');ur.textContent=q.ur;ur.dir='rtl';card.append(en,ur);
+  const choices=document.createElement('div');choices.className='choices';
+  for(const [label,value] of [['Yes / ہاں',true],['No / نہیں',false],['Unknown / نامعلوم',null]]){
+   const b=document.createElement('button');b.textContent=label;b.disabled=sent;b.setAttribute('aria-pressed',String(Object.hasOwn(answers,q.key)&&answers[q.key]===value));b.onclick=()=>choose(q.key,value);choices.append(b);
+  }
+  const hear=document.createElement('button');hear.textContent='🔊 Hear / سنیں';hear.onclick=()=>play(q);hear.disabled=sent||(!q.audio&&(!window.speechSynthesis||!window.speechSynthesis.getVoices().some(v=>v.lang.toLowerCase().split('-')[0]===args.language.toLowerCase().split('-')[0])));
+  card.append(choices,hear);grid.append(card);
+ }
+ document.getElementById('previous').disabled=sent||current===0||mode==='all';
+ document.getElementById('view').textContent=mode==='all'?'One at a time / ایک ایک سوال':'Show all / سب سوالات';
+ document.getElementById('view').disabled=sent;frame();
+}
+window.addEventListener('message',e=>{if(e.data.type!=='streamlit:render')return;const next=e.data.args;if(next.scope!==scope||next.case_id!==args.case_id){stopAudio();scope=next.scope;answers={...next.answers};started=performance.now();sent=false;current=Math.max(0,next.questions.findIndex(q=>!Object.hasOwn(answers,q.key)));mode='single';}args=next;draw();});
+document.getElementById('stop').onclick=stopAudio;
+document.getElementById('previous').onclick=()=>{stopAudio();current=Math.max(0,current-1);draw();};
+document.getElementById('view').onclick=()=>{stopAudio();mode=mode==='all'?'single':'all';draw();};
+if(window.speechSynthesis)window.speechSynthesis.addEventListener('voiceschanged',()=>{if(args.questions)draw();});
+window.addEventListener('pagehide',stopAudio);emit('streamlit:componentReady',{apiVersion:1});
+</script></html>

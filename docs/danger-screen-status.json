@@ -1,0 +1,28 @@
+{
+  "format": "smartsehat-danger-readiness-1",
+  "content_hash": "2325c6080c62ea4cf6f37534ddd7f915bf3f56842dca103bc1c9e04167b8b5b2",
+  "audio": {
+    "English": {
+      "prepared": 18,
+      "total_unique": 18
+    },
+    "Urdu": {
+      "prepared": 17,
+      "total_unique": 17
+    }
+  },
+  "unavailable_or_invalid_audio": [],
+  "prepared_audio_complete": true,
+  "clinical_and_pronunciation_review": {
+    "matching_reported_reviews": 0,
+    "reviewer_identity_verified": false,
+    "status": "Pending real physician/native-speaker review"
+  },
+  "usability": {
+    "matching_reported_observations": 0,
+    "reported_under_30_seconds": 0,
+    "independent_validation_established": false,
+    "status": "Pending actual separately observed target-device trial"
+  },
+  "overall_status": "Prepared software/audio; external clinical and usability validation pending"
+}

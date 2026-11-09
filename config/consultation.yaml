@@ -1,0 +1,76 @@
+review_status: pending
+version: consultation-1
+timezone: Asia/Karachi
+# Prototype configuration transcribed from the supplied implementation plan.
+# Clinical sign-off is required before use with patients.
+age:
+  days_per_year: 365.25
+  days_per_month: 30.4375
+  infant_days: 60
+  child_days: 1826
+  older_child_years: 15
+  dob_mismatch_days: 30
+  month_entry_warning_above: 59
+  year_entry_warning_below: 1
+  year_entry_warning_above: 110
+measurements:
+  temperature: {min: 30, max: 43, unit: C}
+  spo2: {min: 50, max: 100, unit: '%'}
+  pulse: {min: 20, max: 250, unit: /min}
+  resp_rate: {min: 5, max: 120, unit: /min}
+  systolic: {min: 50, max: 260, unit: mmHg}
+  diastolic: {min: 20, max: 180, unit: mmHg}
+  weight: {min: 0.5, max: 300, unit: kg}
+  muac: {min: 5, max: 30, unit: cm}
+weight_bands:
+  - {under_days: 60, max: 10}
+  - {under_days: 730, max: 25}
+  - {under_days: 1826, max: 50}
+  - {under_days: 5479, max: 150}
+danger_signs:
+  child:
+    - {key: cannot_drink, id: DS-CH-01, en: Cannot drink or breastfeed, ur: دودھ یا پانی نہیں پی سکتا}
+    - {key: vomits_everything, id: DS-CH-02, en: Vomits everything, ur: ہر چیز کی الٹی}
+    - {key: convulsions, id: DS-CH-03, en: Convulsions or fits, ur: دورے}
+    - {key: lethargic, id: DS-CH-04, en: Lethargic or unconscious, ur: بہت سست یا بے ہوش}
+  adult:
+    - {key: severe_breathlessness, id: DS-AD-01, en: Severe breathlessness, ur: سانس لینے میں شدید مشکل}
+    - {key: cannot_speak, id: DS-AD-02, en: Cannot speak full sentences, ur: پورا جملہ نہیں بول سکتا}
+    - {key: confusion, id: DS-AD-03, en: Confusion, ur: ذہنی الجھن}
+    - {key: chest_pain, id: DS-AD-04, en: Chest pain, ur: سینے میں درد}
+    - {key: fainting, id: DS-AD-05, en: Fainting, ur: بے ہوشی}
+    - {key: blue_lips, id: DS-AD-06, en: Blue lips, ur: نیلے ہونٹ}
+    - {key: convulsions, id: DS-AD-07, en: Fits, ur: دورے}
+    - {key: heavy_bleeding, id: DS-AD-08, en: Heavy bleeding, ur: بہت خون بہنا}
+    - {key: shock, id: DS-AD-09, en: Signs of shock, ur: صدمے کی علامات}
+  maternal:
+    - {key: vaginal_bleeding, id: DS-PG-01, en: Vaginal bleeding, ur: اندام نہانی سے خون}
+    - {key: severe_headache_blurred_vision, id: DS-PG-02, en: Severe headache with blurred vision, ur: شدید سر درد اور دھندلا نظر آنا}
+    - {key: convulsions, id: DS-PG-03, en: Fits, ur: دورے}
+    - {key: reduced_fetal_movement, id: DS-PG-04, en: Reduced fetal movement, ur: بچے کی حرکت کم}
+    - {key: fever, id: DS-PG-05, en: Fever, ur: بخار}
+    - {key: leaking_fluid, id: DS-PG-06, en: Leaking fluid, ur: پانی بہنا}
+thresholds:
+  spo2_red: 90
+  rr_infant: 60
+  rr_2_11_months: 50
+  rr_12_59_months: 40
+  rr_adult: 30
+  infant_fever: 38
+  infant_low_temperature: 35.5
+  child_indrawing_level: RED
+  tb_cough_days: 14
+  fever_days: 7
+  diarrhoea_days: 14
+  muac_min_age_days: 183
+  muac_red_flag: 11.5
+  crb_systolic: 90
+  crb_diastolic: 60
+  crb_age_days: 23741
+  crb_red_score: 3
+routing:
+  escalation_minutes: 10
+  # Prototype delays, pending partner review; separate policies can be configured.
+  escalation_by_urgency: {RED: [10, 20, 30], AMBER: [10, 20, 30], GREEN: [10, 20, 30]}
+  followup_hours: 48
+  targets: {RED: 'Immediate review; do not delay emergency referral', AMBER: 'Within the hour', GREEN: 'Same day'}

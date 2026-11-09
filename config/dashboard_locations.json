@@ -1,0 +1,12 @@
+{
+  "description": "Illustrative demo clinic/area coordinates, not patient GPS or verified facility locations. Only exact configured names are mapped. Unrecognised places stay unmapped.",
+  "locations": [
+    {"match": "BHU-0442", "name": "BHU-0442 · Rajanpur (demo)", "lat": 28.4, "lon": 70.3, "illustrative": true},
+    {"match": "BHU-0511", "name": "BHU-0511 · Layyah (demo)", "lat": 30.97, "lon": 71.22, "illustrative": true},
+    {"match": "BHU-0623", "name": "BHU-0623 · Muzaffargarh (demo)", "lat": 30.47, "lon": 71.13, "illustrative": true},
+    {"match": "BHU-0788", "name": "BHU-0788 · Rojhan (demo)", "lat": 28.9, "lon": 70.3, "illustrative": true},
+    {"match": "Synthetic village", "name": "Synthetic village · illustrative demo location", "lat": 29.05, "lon": 70.32, "illustrative": true, "synthetic_only": true},
+    {"match": "Synthetic village A", "name": "Synthetic village A · illustrative demo location", "lat": 28.97, "lon": 70.24, "illustrative": true, "synthetic_only": true},
+    {"match": "Synthetic village B", "name": "Synthetic village B · illustrative demo location", "lat": 29.12, "lon": 70.43, "illustrative": true, "synthetic_only": true}
+  ]
+}

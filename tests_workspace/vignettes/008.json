@@ -1,0 +1,83 @@
+{
+  "name": "child-11m-hypoxia",
+  "age": {
+    "value": 11,
+    "unit": "months",
+    "days": 335,
+    "display": "11 months = 0 years 11 months (335 days)",
+    "warning": "",
+    "pathway": "child"
+  },
+  "facts": [
+    {
+      "id": "F1",
+      "key": "cannot_drink",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F2",
+      "key": "vomits_everything",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F3",
+      "key": "convulsions",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F4",
+      "key": "lethargic",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F5",
+      "key": "cough",
+      "value": true,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F6",
+      "key": "resp_rate",
+      "value": 49,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F7",
+      "key": "spo2",
+      "value": 89,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F8",
+      "key": "weight",
+      "value": 10,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    }
+  ],
+  "pregnant": false,
+  "expected_urgency": "RED",
+  "expected_rule_ids": [
+    "SPO2-01"
+  ],
+  "synthetic": true
+}

@@ -34,3 +34,33 @@ Thumbs.db
 
 # Machine-specific agent permissions
 .claude/settings.local.json
+
+# Local environments and secrets
+.venv/
+.env
+.env.*
+!.env*.example
+**/.consultation-keys/
+*.pem
+*.key
+# Runtime case data, media and encrypted caches
+*.db
+*.db-*
+*.sqlite*
+assets/uploaded/
+assets/prompt_audio/
+data/consultation_cache/
+data/consultation_prompt_recordings/
+data/consultation_speech_cache/
+data/npm-cache/
+# Generated and dependency artifacts
+__pycache__/
+*.py[cod]
+node_modules/
+.finale-build/
+.publish-worktree/
+finale/logs/
+*.zip
+~$*
+
+*-tests.log

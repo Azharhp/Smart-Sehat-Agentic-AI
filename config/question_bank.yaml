@@ -1,0 +1,345 @@
+review_status: pending
+version: consultation-1
+questions:
+- id: Q01
+  asks_key: cough
+  text_en: Is there a cough?
+  text_ur: کیا کھانسی ہے؟
+  trigger: always
+  kind: bool
+  priority: 37
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q02
+  asks_key: breathlessness
+  text_en: Is breathing difficult?
+  text_ur: کیا سانس لینے میں مشکل ہے؟
+  trigger: always
+  kind: bool
+  priority: 36
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q03
+  asks_key: fever
+  text_en: Has there been fever?
+  text_ur: کیا بخار ہے؟
+  trigger: always
+  kind: bool
+  priority: 35
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q04
+  asks_key: cough_days
+  text_en: For how many days has there been a cough?
+  text_ur: کھانسی کتنے دن سے ہے؟
+  trigger: cough
+  kind: number
+  priority: 34
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q05
+  asks_key: fever_days
+  text_en: For how many days has there been fever?
+  text_ur: بخار کتنے دن سے ہے؟
+  trigger: fever
+  kind: number
+  priority: 33
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q06
+  asks_key: chest_indrawing
+  text_en: Does the chest draw in during breathing?
+  text_ur: کیا سانس لیتے وقت سینہ اندر جاتا ہے؟
+  trigger: respiratory
+  kind: bool
+  priority: 32
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q07
+  asks_key: stridor
+  text_en: Is there a harsh breathing sound when calm?
+  text_ur: کیا سکون میں سانس کی سخت آواز ہے؟
+  trigger: respiratory
+  kind: bool
+  priority: 31
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q08
+  asks_key: wheeze
+  text_en: Is there wheezing?
+  text_ur: کیا سانس میں سیٹی آتی ہے؟
+  trigger: respiratory
+  kind: bool
+  priority: 30
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q09
+  asks_key: vomiting
+  text_en: Has there been vomiting?
+  text_ur: کیا الٹی ہوئی ہے؟
+  trigger: always
+  kind: bool
+  priority: 29
+  pertinent_negative: true
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q10
+  asks_key: diarrhoea
+  text_en: Has there been diarrhoea?
+  text_ur: کیا دست ہیں؟
+  trigger: always
+  kind: bool
+  priority: 28
+  pertinent_negative: true
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q11
+  asks_key: convulsions
+  text_en: Have there been fits?
+  text_ur: کیا دورے پڑے ہیں؟
+  trigger: always
+  kind: bool
+  priority: 27
+  pertinent_negative: true
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q12
+  asks_key: rash
+  text_en: Is there a rash?
+  text_ur: کیا جسم پر دانے ہیں؟
+  trigger: always
+  kind: bool
+  priority: 26
+  pertinent_negative: true
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q13
+  asks_key: drinking
+  text_en: Is the patient drinking or feeding normally?
+  text_ur: کیا مریض معمول کے مطابق پی رہا ہے؟
+  trigger: always
+  kind: bool
+  priority: 25
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q14
+  asks_key: urine_reduced
+  text_en: Is urine reduced?
+  text_ur: کیا پیشاب کم ہے؟
+  trigger: always
+  kind: bool
+  priority: 24
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q15
+  asks_key: neck_stiffness
+  text_en: Is the neck stiff?
+  text_ur: کیا گردن اکڑی ہوئی ہے؟
+  trigger: fever
+  kind: bool
+  priority: 23
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q16
+  asks_key: bleeding
+  text_en: Is there unusual bleeding?
+  text_ur: کیا غیر معمولی خون بہہ رہا ہے؟
+  trigger: fever
+  kind: bool
+  priority: 22
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q17
+  asks_key: persistent_vomiting
+  text_en: Is vomiting persistent?
+  text_ur: کیا بار بار الٹی ہو رہی ہے؟
+  trigger: fever
+  kind: bool
+  priority: 21
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q18
+  asks_key: abdominal_pain
+  text_en: Is there abdominal pain?
+  text_ur: کیا پیٹ میں درد ہے؟
+  trigger: fever
+  kind: bool
+  priority: 20
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q19
+  asks_key: haemoptysis
+  text_en: Is there blood in the sputum?
+  text_ur: کیا بلغم میں خون ہے؟
+  trigger: cough
+  kind: bool
+  priority: 19
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q20
+  asks_key: weight_loss
+  text_en: Has there been weight loss?
+  text_ur: کیا وزن کم ہوا ہے؟
+  trigger: tb
+  kind: bool
+  priority: 18
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q21
+  asks_key: night_sweats
+  text_en: Are there night sweats?
+  text_ur: کیا رات کو پسینہ آتا ہے؟
+  trigger: tb
+  kind: bool
+  priority: 17
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q22
+  asks_key: tb_contact
+  text_en: Has there been contact with someone with TB?
+  text_ur: کیا ٹی بی کے مریض سے رابطہ ہوا؟
+  trigger: tb
+  kind: bool
+  priority: 16
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q23
+  asks_key: diabetes
+  text_en: Does the patient have diabetes?
+  text_ur: کیا مریض کو شوگر ہے؟
+  trigger: tb
+  kind: bool
+  priority: 15
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q24
+  asks_key: previous_tb
+  text_en: Has the patient previously had TB?
+  text_ur: کیا پہلے ٹی بی ہوئی ہے؟
+  trigger: tb
+  kind: bool
+  priority: 14
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q25
+  asks_key: recurrent_wheeze
+  text_en: Has wheezing happened before?
+  text_ur: کیا پہلے بھی سانس میں سیٹی آئی؟
+  trigger: wheeze
+  kind: bool
+  priority: 13
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q26
+  asks_key: night_cough
+  text_en: Is the cough worse at night?
+  text_ur: کیا کھانسی رات کو بڑھتی ہے؟
+  trigger: wheeze
+  kind: bool
+  priority: 12
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q27
+  asks_key: asthma_history
+  text_en: Is there a history of asthma?
+  text_ur: کیا دمہ کی تاریخ ہے؟
+  trigger: wheeze
+  kind: bool
+  priority: 11
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q28
+  asks_key: smoke_exposure
+  text_en: Is there tobacco or cooking-smoke exposure?
+  text_ur: کیا تمباکو یا چولہے کے دھوئیں سے واسطہ ہے؟
+  trigger: respiratory
+  kind: bool
+  priority: 10
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q29
+  asks_key: sick_contact
+  text_en: Has anyone nearby had similar symptoms?
+  text_ur: کیا آس پاس کسی کو ایسی علامات ہیں؟
+  trigger: always
+  kind: bool
+  priority: 9
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q30
+  asks_key: immunisation_complete
+  text_en: Are the child's vaccinations up to date?
+  text_ur: کیا بچے کے حفاظتی ٹیکے مکمل ہیں؟
+  trigger: child
+  kind: bool
+  priority: 8
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q31
+  asks_key: premature_birth
+  text_en: Was the child born prematurely?
+  text_ur: کیا بچہ وقت سے پہلے پیدا ہوا تھا؟
+  trigger: child
+  kind: bool
+  priority: 7
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q32
+  asks_key: past_admission
+  text_en: Has the patient been admitted before?
+  text_ur: کیا پہلے ہسپتال میں داخل ہوا؟
+  trigger: always
+  kind: bool
+  priority: 6
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q33
+  asks_key: allergy_penicillin
+  text_en: Is there a known penicillin allergy?
+  text_ur: کیا پینسلین سے الرجی ہے؟
+  trigger: always
+  kind: bool
+  priority: 5
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q34
+  asks_key: allergies
+  text_en: List other allergies, or explicitly write none or unknown.
+  text_ur: دوسری الرجی لکھیں، یا کوئی نہیں یا معلوم نہیں لکھیں۔
+  trigger: always
+  kind: text
+  priority: 4
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q35
+  asks_key: chronic_conditions
+  text_en: List existing illnesses, or none or unknown.
+  text_ur: پرانی بیماریاں لکھیں، یا کوئی نہیں یا معلوم نہیں۔
+  trigger: always
+  kind: text
+  priority: 3
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q36
+  asks_key: breastfeeding
+  text_en: Is the patient breastfeeding?
+  text_ur: کیا مریضہ دودھ پلا رہی ہے؟
+  trigger: adult
+  kind: bool
+  priority: 2
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q37
+  asks_key: medicine_history
+  text_en: What has been taken, how much, for how long, and who advised it?
+  text_ur: کون سی دوا، کتنی، کب سے اور کس کے مشورے پر لی؟
+  trigger: always
+  kind: text
+  priority: 1
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔
+- id: Q38
+  asks_key: worker_request
+  text_en: What question should the doctor answer?
+  text_ur: ڈاکٹر سے کیا پوچھنا ہے؟
+  trigger: always
+  kind: text
+  priority: 0
+  pertinent_negative: false
+  why_ur: یہ معلومات ڈاکٹر کو مکمل صورت حال سمجھنے میں مدد دیتی ہیں۔

@@ -1,0 +1,1643 @@
+{
+  "synthetic": true,
+  "clinical_validation": false,
+  "cases": [
+    {
+      "name": "child-2m-rr-49",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-2m-rr-50",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "RR-CH-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fast breathing for age",
+            "fact_ids": [
+              "F6"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-2m-rr-51",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "RR-CH-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fast breathing for age",
+            "fact_ids": [
+              "F6"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-2m-hypoxia",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "SPO2-01",
+            "level": "RED",
+            "layer": "vitals",
+            "text": "Oxygen saturation below configured threshold",
+            "fact_ids": [
+              "F7"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-11m-rr-49",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-11m-rr-50",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "RR-CH-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fast breathing for age",
+            "fact_ids": [
+              "F6"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-11m-rr-51",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "RR-CH-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fast breathing for age",
+            "fact_ids": [
+              "F6"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-11m-hypoxia",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "SPO2-01",
+            "level": "RED",
+            "layer": "vitals",
+            "text": "Oxygen saturation below configured threshold",
+            "fact_ids": [
+              "F7"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-12m-rr-39",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-12m-rr-40",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "RR-CH-02",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fast breathing for age",
+            "fact_ids": [
+              "F6"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-12m-rr-41",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "RR-CH-02",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fast breathing for age",
+            "fact_ids": [
+              "F6"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-12m-hypoxia",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "SPO2-01",
+            "level": "RED",
+            "layer": "vitals",
+            "text": "Oxygen saturation below configured threshold",
+            "fact_ids": [
+              "F7"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-14m-rr-39",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-14m-rr-40",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "RR-CH-02",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fast breathing for age",
+            "fact_ids": [
+              "F6"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-14m-rr-41",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "RR-CH-02",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fast breathing for age",
+            "fact_ids": [
+              "F6"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-14m-hypoxia",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "SPO2-01",
+            "level": "RED",
+            "layer": "vitals",
+            "text": "Oxygen saturation below configured threshold",
+            "fact_ids": [
+              "F7"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-59m-rr-39",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-59m-rr-40",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "RR-CH-02",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fast breathing for age",
+            "fact_ids": [
+              "F6"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-59m-rr-41",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "RR-CH-02",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fast breathing for age",
+            "fact_ids": [
+              "F6"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "child-59m-hypoxia",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "SPO2-01",
+            "level": "RED",
+            "layer": "vitals",
+            "text": "Oxygen saturation below configured threshold",
+            "fact_ids": [
+              "F7"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "infant-5-illness",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "ILL-INF-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Illness in a young infant",
+            "fact_ids": [
+              "F5"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "infant-5-rr60",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "RR-INF-01",
+            "level": "RED",
+            "layer": "pathway",
+            "text": "Fast breathing in a young infant",
+            "fact_ids": [
+              "F5"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "infant-30-illness",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "ILL-INF-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Illness in a young infant",
+            "fact_ids": [
+              "F5"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "infant-30-rr60",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "RR-INF-01",
+            "level": "RED",
+            "layer": "pathway",
+            "text": "Fast breathing in a young infant",
+            "fact_ids": [
+              "F5"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "infant-59-illness",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "ILL-INF-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Illness in a young infant",
+            "fact_ids": [
+              "F5"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "infant-59-rr60",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "RR-INF-01",
+            "level": "RED",
+            "layer": "pathway",
+            "text": "Fast breathing in a young infant",
+            "fact_ids": [
+              "F5"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "adult-20-spo2-89",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "SPO2-01",
+            "level": "RED",
+            "layer": "vitals",
+            "text": "Oxygen saturation below configured threshold",
+            "fact_ids": [
+              "F12"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "adult-20-spo2-90",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "adult-20-spo2-94",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "adult-40-spo2-89",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "SPO2-01",
+            "level": "RED",
+            "layer": "vitals",
+            "text": "Oxygen saturation below configured threshold",
+            "fact_ids": [
+              "F12"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "adult-40-spo2-90",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "adult-40-spo2-94",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "adult-65-spo2-89",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "SPO2-01",
+            "level": "RED",
+            "layer": "vitals",
+            "text": "Oxygen saturation below configured threshold",
+            "fact_ids": [
+              "F12"
+            ]
+          },
+          {
+            "rule_id": "CRB-AD-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "CRB-65 score 1",
+            "fact_ids": [
+              "F3",
+              "F11",
+              "F13",
+              "F14"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "adult-65-spo2-90",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "CRB-AD-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "CRB-65 score 1",
+            "fact_ids": [
+              "F3",
+              "F11",
+              "F13",
+              "F14"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "adult-65-spo2-94",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "CRB-AD-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "CRB-65 score 1",
+            "fact_ids": [
+              "F3",
+              "F11",
+              "F13",
+              "F14"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "adult-80-spo2-89",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "SPO2-01",
+            "level": "RED",
+            "layer": "vitals",
+            "text": "Oxygen saturation below configured threshold",
+            "fact_ids": [
+              "F12"
+            ]
+          },
+          {
+            "rule_id": "CRB-AD-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "CRB-65 score 1",
+            "fact_ids": [
+              "F3",
+              "F11",
+              "F13",
+              "F14"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "adult-80-spo2-90",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "CRB-AD-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "CRB-65 score 1",
+            "fact_ids": [
+              "F3",
+              "F11",
+              "F13",
+              "F14"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "adult-80-spo2-94",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "CRB-AD-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "CRB-65 score 1",
+            "fact_ids": [
+              "F3",
+              "F11",
+              "F13",
+              "F14"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-PG-01",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-PG-01",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Vaginal bleeding",
+            "fact_ids": [
+              "F10"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-PG-02",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-PG-02",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Severe headache with blurred vision",
+            "fact_ids": [
+              "F11"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-PG-03",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-PG-03",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Fits",
+            "fact_ids": [
+              "F7"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-PG-04",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-PG-04",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Reduced fetal movement",
+            "fact_ids": [
+              "F12"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-PG-05",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-PG-05",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Fever",
+            "fact_ids": [
+              "F13"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-PG-06",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-PG-06",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Leaking fluid",
+            "fact_ids": [
+              "F14"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-AD-01",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-AD-01",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Severe breathlessness",
+            "fact_ids": [
+              "F1"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-AD-02",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-AD-02",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Cannot speak full sentences",
+            "fact_ids": [
+              "F2"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-AD-03",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-AD-03",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Confusion",
+            "fact_ids": [
+              "F3"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-AD-04",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-AD-04",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Chest pain",
+            "fact_ids": [
+              "F4"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-AD-05",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-AD-05",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Fainting",
+            "fact_ids": [
+              "F5"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-AD-06",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-AD-06",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Blue lips",
+            "fact_ids": [
+              "F6"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-AD-07",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-AD-07",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Fits",
+            "fact_ids": [
+              "F7"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-AD-08",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-AD-08",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Heavy bleeding",
+            "fact_ids": [
+              "F8"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-AD-09",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-AD-09",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Signs of shock",
+            "fact_ids": [
+              "F9"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-CH-01",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-CH-01",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Cannot drink or breastfeed",
+            "fact_ids": [
+              "F1"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-CH-02",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-CH-02",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Vomits everything",
+            "fact_ids": [
+              "F2"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-CH-03",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-CH-03",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Convulsions or fits",
+            "fact_ids": [
+              "F3"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "DS-CH-04",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "DS-CH-04",
+            "level": "RED",
+            "layer": "danger",
+            "text": "Lethargic or unconscious",
+            "fact_ids": [
+              "F4"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "fever-fever_days",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "FEV-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fever pathway warning",
+            "fact_ids": [
+              "F10"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "fever-neck_stiffness",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "FEV-01",
+            "level": "RED",
+            "layer": "pathway",
+            "text": "Fever pathway warning",
+            "fact_ids": [
+              "F10"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "fever-bleeding",
+      "expected": "RED",
+      "actual": "RED",
+      "passed": true,
+      "result": {
+        "level": "RED",
+        "fired": [
+          {
+            "rule_id": "FEV-01",
+            "level": "RED",
+            "layer": "pathway",
+            "text": "Fever pathway warning",
+            "fact_ids": [
+              "F10"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "fever-rash",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "FEV-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fever pathway warning",
+            "fact_ids": [
+              "F10"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "fever-persistent_vomiting",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "FEV-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fever pathway warning",
+            "fact_ids": [
+              "F10"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "fever-abdominal_pain",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "FEV-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Fever pathway warning",
+            "fact_ids": [
+              "F10"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "missing-spo2",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "MISSING-01",
+            "level": "AMBER",
+            "layer": "missing",
+            "text": "Critical information unavailable: spo2",
+            "fact_ids": []
+          }
+        ],
+        "missing_critical": [
+          "spo2"
+        ],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "missing-resp_rate",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "MISSING-01",
+            "level": "AMBER",
+            "layer": "missing",
+            "text": "Critical information unavailable: resp_rate",
+            "fact_ids": []
+          }
+        ],
+        "missing_critical": [
+          "resp_rate"
+        ],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "missing-weight",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "MISSING-01",
+            "level": "AMBER",
+            "layer": "missing",
+            "text": "Critical information unavailable: weight",
+            "fact_ids": []
+          }
+        ],
+        "missing_critical": [
+          "weight"
+        ],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "generic-6",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "generic-14",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "generic-30",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "generic-80",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "diarrhoea-13-days",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "diarrhoea-14-days",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "DIARRHOEA-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Diarrhoea warning: doctor review required",
+            "fact_ids": [
+              "F10",
+              "F11"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "diarrhoea-blood",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "DIARRHOEA-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Diarrhoea warning: doctor review required",
+            "fact_ids": [
+              "F10",
+              "F11"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "reported-worsening",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "COURSE-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Patient reports worsening or severe symptoms; doctor review required",
+            "fact_ids": [
+              "F10"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "malaria-positive",
+      "expected": "AMBER",
+      "actual": "AMBER",
+      "passed": true,
+      "result": {
+        "level": "AMBER",
+        "fired": [
+          {
+            "rule_id": "POC-01",
+            "level": "AMBER",
+            "layer": "pathway",
+            "text": "Positive recorded malaria test: doctor interpretation required",
+            "fact_ids": [
+              "F10"
+            ]
+          }
+        ],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    },
+    {
+      "name": "malaria-negative",
+      "expected": "GREEN",
+      "actual": "GREEN",
+      "passed": true,
+      "result": {
+        "level": "GREEN",
+        "fired": [],
+        "missing_critical": [],
+        "version": "consultation-1",
+        "review_status": "pending"
+      }
+    }
+  ],
+  "parity": "76/76 exact results match"
+}

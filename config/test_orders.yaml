@@ -1,0 +1,10 @@
+review_status: pending
+version: consultation-1
+tests:
+  glucose: {label: Glucose, location: local, key: glucose, instructions: 'Perform the doctor-requested glucose test if trained and equipped; return the reading with its unit, or explain why unavailable.'}
+  malaria_rdt: {label: Malaria RDT, location: local, key: malaria_rdt, instructions: 'Return the doctor-requested malaria rapid-test result, including invalid results; explain if unavailable.'}
+  pregnancy_test: {label: Pregnancy test, location: local, key: pregnancy_test, instructions: 'Return the doctor-requested pregnancy-test result, including invalid results; explain if unavailable.'}
+  haemoglobin: {label: Haemoglobin if stocked, location: local, key: haemoglobin, instructions: 'Return the doctor-requested haemoglobin reading with its unit, or explain why unavailable.'}
+  sputum_test: {label: Sputum test, location: lab, key: lab_result, instructions: 'Arrange the doctor-requested sputum test through the selected facility. Return the report exactly as issued, or record why it is unavailable.'}
+  chest_xray: {label: Chest X-ray, location: lab, key: lab_result, instructions: 'Arrange the doctor-requested chest X-ray. Return the report exactly as issued, with its image/report if available. Do not interpret it.'}
+  blood_count: {label: Blood count, location: lab, key: lab_result, instructions: 'Arrange the doctor-requested blood count and return the laboratory report exactly as issued, or explain why unavailable.'}

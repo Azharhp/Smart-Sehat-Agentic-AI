@@ -1,0 +1,59 @@
+{
+  "name": "infant-59-rr60",
+  "age": {
+    "value": 59,
+    "unit": "days",
+    "days": 59,
+    "display": "59 days = 0 years 2 months (59 days)",
+    "warning": "",
+    "pathway": "young_infant"
+  },
+  "facts": [
+    {
+      "id": "F1",
+      "key": "cannot_drink",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F2",
+      "key": "vomits_everything",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F3",
+      "key": "convulsions",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F4",
+      "key": "lethargic",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F5",
+      "key": "resp_rate",
+      "value": 60,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    }
+  ],
+  "pregnant": false,
+  "expected_urgency": "RED",
+  "expected_rule_ids": [
+    "RR-INF-01"
+  ],
+  "synthetic": true
+}

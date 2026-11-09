@@ -1,0 +1,36 @@
+{
+  "review_status": "pending",
+  "synthetic": true,
+  "doctors": [
+    {"id": "SYN-DOC-1", "name": "Simulated child-health reviewer", "groups": ["young_infant", "child", "older_child"], "languages": ["Urdu", "English"]},
+    {"id": "SYN-DOC-2", "name": "Simulated general reviewer", "groups": ["adult", "older_adult", "young_infant", "child", "older_child"], "languages": ["Urdu", "English"]},
+    {"id": "SYN-DOC-3", "name": "Simulated maternal reviewer", "groups": ["maternal"], "languages": ["Urdu", "English"]}
+  ],
+  "facilities": [
+    {"id": "SYN-DHQ", "name": "Synthetic DHQ referral hospital", "capabilities": ["oxygen", "xray", "paediatric", "lab"], "distance_km": 18, "transport": "Simulated ambulance coordination"},
+    {"id": "SYN-THQ", "name": "Synthetic THQ hospital", "capabilities": ["oxygen", "lab"], "distance_km": 12, "transport": "Simulated local transport"},
+    {"id": "SYN-MCH", "name": "Synthetic maternal centre", "capabilities": ["caesarean", "oxygen"], "distance_km": 25, "transport": "Simulated ambulance coordination"},
+    {"id": "SYN-TB", "name": "Synthetic TB programme centre", "capabilities": ["sputum", "lab"], "distance_km": 20, "transport": "Simulated local transport"},
+    {"id": "SYN-BHU", "name": "Synthetic BHU", "capabilities": ["glucose", "malaria_rdt"], "distance_km": 3, "transport": "Simulated local transport"}
+  ],
+  "stock": ["paracetamol", "amoxicillin", "ORS", "salbutamol", "metformin", "omeprazole", "ibuprofen", "azithromycin", "metronidazole", "iron"],
+  "extra_brands": [
+    {"brand": "Panadol Cold and Flu", "generic": ["paracetamol", "phenylephrine", "chlorpheniramine"], "class": "combination"},
+    {"brand": "Ventolin", "generic": ["salbutamol"], "class": "bronchodilator"},
+    {"brand": "Arinac", "generic": ["ibuprofen", "pseudoephedrine"], "class": "combination"},
+    {"brand": "Rigix", "generic": ["cetirizine"], "class": "antihistamine"},
+    {"brand": "Telfast", "generic": ["fexofenadine"], "class": "antihistamine"},
+    {"brand": "Motilium", "generic": ["domperidone"], "class": "antiemetic"},
+    {"brand": "Gravinate", "generic": ["dimenhydrinate"], "class": "antiemetic"},
+    {"brand": "Deltacortril", "generic": ["prednisolone"], "class": "steroid"},
+    {"brand": "Dexa", "generic": ["dexamethasone"], "class": "steroid"}
+  ],
+  "medication_rules": {
+    "penicillin_generics": ["amoxicillin", "amoxicillin-clavulanate", "ampicillin", "penicillin"],
+    "interactions": [
+      {"ingredients": ["ibuprofen", "aspirin"], "message": "Multiple NSAID ingredients: doctor/pharmacist review required."},
+      {"ingredients": ["rifampicin", "ethinylestradiol"], "message": "Potential interaction: doctor/pharmacist review required."}
+    ]
+  },
+  "dose_review": {"status": "pending", "entries": []}
+}
