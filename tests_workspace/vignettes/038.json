@@ -1,0 +1,129 @@
+{
+  "name": "adult-80-spo2-94",
+  "age": {
+    "value": 80,
+    "unit": "years",
+    "days": 29220,
+    "display": "80 years = 80 years 0 months (29220 days)",
+    "warning": "",
+    "pathway": "older_adult"
+  },
+  "facts": [
+    {
+      "id": "F1",
+      "key": "severe_breathlessness",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F2",
+      "key": "cannot_speak",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F3",
+      "key": "confusion",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F4",
+      "key": "chest_pain",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F5",
+      "key": "fainting",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F6",
+      "key": "blue_lips",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F7",
+      "key": "convulsions",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F8",
+      "key": "heavy_bleeding",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F9",
+      "key": "shock",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F10",
+      "key": "cough",
+      "value": true,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F11",
+      "key": "resp_rate",
+      "value": 20,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F12",
+      "key": "spo2",
+      "value": 94,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F13",
+      "key": "systolic",
+      "value": 120,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F14",
+      "key": "diastolic",
+      "value": 80,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    }
+  ],
+  "pregnant": false,
+  "expected_urgency": "AMBER",
+  "expected_rule_ids": [],
+  "synthetic": true
+}

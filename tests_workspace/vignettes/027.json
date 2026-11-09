@@ -1,0 +1,131 @@
+{
+  "name": "adult-20-spo2-89",
+  "age": {
+    "value": 20,
+    "unit": "years",
+    "days": 7305,
+    "display": "20 years = 20 years 0 months (7305 days)",
+    "warning": "",
+    "pathway": "adult"
+  },
+  "facts": [
+    {
+      "id": "F1",
+      "key": "severe_breathlessness",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F2",
+      "key": "cannot_speak",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F3",
+      "key": "confusion",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F4",
+      "key": "chest_pain",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F5",
+      "key": "fainting",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F6",
+      "key": "blue_lips",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F7",
+      "key": "convulsions",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F8",
+      "key": "heavy_bleeding",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F9",
+      "key": "shock",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F10",
+      "key": "cough",
+      "value": true,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F11",
+      "key": "resp_rate",
+      "value": 20,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F12",
+      "key": "spo2",
+      "value": 89,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F13",
+      "key": "systolic",
+      "value": 120,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F14",
+      "key": "diastolic",
+      "value": 80,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    }
+  ],
+  "pregnant": false,
+  "expected_urgency": "RED",
+  "expected_rule_ids": [
+    "SPO2-01"
+  ],
+  "synthetic": true
+}

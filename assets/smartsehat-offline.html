@@ -1,0 +1,72 @@
+<!doctype html><html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SmartSehat offline safety capture</title><style>body{font:18px system-ui;max-width:760px;margin:20px auto;padding:16px}input,select,button{font:inherit;min-height:46px;padding:8px;margin:5px}label{display:block;margin:12px}#banner{padding:20px;border-radius:10px;font-size:24px}section{border:1px solid #cbd5dd;border-radius:12px;padding:12px;margin:12px 0}.RED{background:#ffe0e0;color:#900}.AMBER{background:#fff0c2}.GREEN{background:#d7f6eb}</style>
+<h1>SmartSehat · Offline capture</h1><p>SYNTHETIC DATA ONLY · Research prototype · Clinical review pending</p><p>Save this file on the presentation device before disconnecting. Rules and this form work without the Streamlit server. No real delivery or automatic sync.</p>
+<section><label>Fictional ID <input id="name" value="Offline fictional case"></label><label>Age <input id="age" type="number" min="0" value="14"><select id="unit"><option>months</option><option>years</option><option>weeks</option><option>days</option></select></label><label>Pregnant <input id="pregnant" type="checkbox"></label></section>
+<div id="banner" role="alert"></div><section id="danger"></section><section><label>Cough <select id="cough"><option value="">Unknown</option><option value="true">Yes</option><option value="false">No</option></select></label>
+<label>SpO2 % <input id="spo2" type="number" min="50" max="100"></label><label>Respiratory rate /min <input id="resp_rate" type="number" min="5" max="120"></label><label>Weight kg <input id="weight" type="number" min="0.5" max="300"></label><label>Missing measurement reason <input id="reason"></label></section>
+<p id="details"></p><p id="emergency" hidden>EMERGENCY: contact local emergency services/doctor and follow trained local protocols. Do not wait for a form or internet connection.</p><button id="export">Export for worker confirmation</button><p id="status"></p>
+<script>/* Browser port of clinical.evaluate. Configuration is supplied from the same YAML. */
+function evaluateConsultation(facts, age, pregnant, config, aiLevel='GREEN') {
+  const current=Object.fromEntries(facts.filter(f=>f.confirmed).map(f=>[f.key,f]));
+  const v=Object.fromEntries(Object.entries(current).map(([k,f])=>[k,f.value]));
+  const t=config.thresholds, levels={GREEN:0,AMBER:1,RED:2};let level='GREEN';const fired=[];
+  const fire=(rule_id,severity,text,keys,layer='pathway')=>{if(levels[severity]>levels[level])level=severity;fired.push({rule_id,level:severity,layer,text,fact_ids:keys.filter(k=>current[k]).map(k=>current[k].id)});};
+  const group=['young_infant','child','older_child'].includes(age.pathway)?'child':'adult';
+  let questions=[...config.danger_signs[group],...(pregnant?config.danger_signs.maternal:[])];
+  questions=Object.values(Object.fromEntries(questions.map(q=>[q.key,q])));
+  for(const q of questions)if(v[q.key]===true)fire(q.id,'RED',q.en,[q.key],'danger');
+  const respiratory=['cough','breathlessness','wheeze'].some(k=>v[k]===true), rr=v.resp_rate,spo2=v.spo2;
+  if(spo2!=null&&spo2<t.spo2_red)fire('SPO2-01','RED','Oxygen saturation below configured threshold',['spo2'],'vitals');
+  if(age.pathway==='young_infant'){
+    if(['cough','fever','breathlessness','diarrhoea','illness'].some(k=>v[k]===true))fire('ILL-INF-01','AMBER','Illness in a young infant',['age','cough','fever','illness']);
+    if(rr!=null&&rr>=t.rr_infant)fire('RR-INF-01','RED','Fast breathing in a young infant',['age','resp_rate']);
+    if(v.temperature!=null&&(v.temperature>=t.infant_fever||v.temperature<t.infant_low_temperature))fire('TEMP-INF-01','RED','Abnormal temperature in a young infant',['age','temperature']);
+  }else if(age.pathway==='child'){
+    const threshold=age.days<Math.round(12*config.age.days_per_month)?t.rr_2_11_months:t.rr_12_59_months;
+    if(rr!=null&&rr>=threshold)fire(threshold===t.rr_2_11_months?'RR-CH-01':'RR-CH-02','AMBER','Fast breathing for age',['age','resp_rate']);
+  }
+  if(v.chest_indrawing===true||v.stridor===true)fire('CI-CH-01',t.child_indrawing_level,'Chest indrawing or stridor when calm',['chest_indrawing','stridor']);
+  if(respiratory&&['adult','older_adult'].includes(age.pathway)){
+    const score=Number(v.confusion===true)+Number(rr!=null&&rr>=t.rr_adult)+Number((v.systolic!=null&&v.systolic<t.crb_systolic)||(v.diastolic!=null&&v.diastolic<=t.crb_diastolic))+Number(age.days>=t.crb_age_days);
+    if(score)fire('CRB-AD-01',score>=t.crb_red_score?'RED':'AMBER','CRB-65 score '+score,['age','confusion','resp_rate','systolic','diastolic']);
+  }
+  if((v.cough_days||0)>=t.tb_cough_days&&['weight_loss','night_sweats','haemoptysis','tb_contact','diabetes'].some(k=>v[k]===true))fire('TB-01','AMBER','TB screen: doctor review for sputum testing',['cough_days','weight_loss','night_sweats','haemoptysis','tb_contact','diabetes']);
+  if((v.fever_days||0)>t.fever_days||['neck_stiffness','rash','bleeding','persistent_vomiting','abdominal_pain'].some(k=>v[k]===true))fire('FEV-01',v.neck_stiffness===true||v.bleeding===true?'RED':'AMBER','Fever pathway warning',['fever_days','neck_stiffness','rash','bleeding','persistent_vomiting','abdominal_pain']);
+  if(t.muac_min_age_days<=age.days&&age.days<config.age.child_days&&v.muac!=null&&v.muac<t.muac_red_flag)fire('MUAC-01','AMBER','Low MUAC: nutrition review required',['age','muac']);
+  if(v.diarrhoea===true&&((v.diarrhoea_days||0)>=t.diarrhoea_days||v.blood_in_stool===true||v.dehydration===true))fire('DIARRHOEA-01','AMBER','Diarrhoea warning: doctor review required',['diarrhoea','diarrhoea_days','blood_in_stool','dehydration']);
+  if(v.symptom_course==='worsening'||v.symptom_severity==='severe')fire('COURSE-01','AMBER','Patient reports worsening or severe symptoms; doctor review required',['symptom_course','symptom_severity']);
+  if(v.malaria_rdt&&typeof v.malaria_rdt==='object'&&v.malaria_rdt.result==='positive')fire('POC-01','AMBER','Positive recorded malaria test: doctor interpretation required',['malaria_rdt']);
+  if(v.followup_danger===true)fire('FU-DANGER','RED','New danger sign at follow-up',['followup_danger'],'followup');
+  if(v.followup_worse===true)fire('FU-WORSE','AMBER','Worsening at follow-up: reassessment required',['followup_worse'],'followup');
+  const required=questions.map(q=>q.key);
+  if(respiratory){required.push('spo2','resp_rate');if(['young_infant','child','older_child'].includes(age.pathway))required.push('weight');if(['adult','older_adult'].includes(age.pathway))required.push('systolic','diastolic');}
+  const missing=required.filter(k=>v[k]==null);
+  if(missing.length)fire('MISSING-01','AMBER','Critical information unavailable: '+missing.join(', '),missing,'missing');
+  if(levels[aiLevel]>levels[level])fire('AI-CONCERN-01',aiLevel,'AI concern raised urgency; doctor review required',[],'ai');
+  return {level,fired,missing_critical:missing,version:config.version,review_status:'pending'};
+}
+if(typeof module!=='undefined')module.exports={evaluateConsultation};
+
+const config={"review_status": "pending", "version": "consultation-1", "timezone": "Asia/Karachi", "age": {"days_per_year": 365.25, "days_per_month": 30.4375, "infant_days": 60, "child_days": 1826, "older_child_years": 15, "dob_mismatch_days": 30, "month_entry_warning_above": 59, "year_entry_warning_below": 1, "year_entry_warning_above": 110}, "measurements": {"temperature": {"min": 30, "max": 43, "unit": "C"}, "spo2": {"min": 50, "max": 100, "unit": "%"}, "pulse": {"min": 20, "max": 250, "unit": "/min"}, "resp_rate": {"min": 5, "max": 120, "unit": "/min"}, "systolic": {"min": 50, "max": 260, "unit": "mmHg"}, "diastolic": {"min": 20, "max": 180, "unit": "mmHg"}, "weight": {"min": 0.5, "max": 300, "unit": "kg"}, "muac": {"min": 5, "max": 30, "unit": "cm"}}, "weight_bands": [{"under_days": 60, "max": 10}, {"under_days": 730, "max": 25}, {"under_days": 1826, "max": 50}, {"under_days": 5479, "max": 150}], "danger_signs": {"child": [{"key": "cannot_drink", "id": "DS-CH-01", "en": "Cannot drink or breastfeed", "ur": "دودھ یا پانی نہیں پی سکتا"}, {"key": "vomits_everything", "id": "DS-CH-02", "en": "Vomits everything", "ur": "ہر چیز کی الٹی"}, {"key": "convulsions", "id": "DS-CH-03", "en": "Convulsions or fits", "ur": "دورے"}, {"key": "lethargic", "id": "DS-CH-04", "en": "Lethargic or unconscious", "ur": "بہت سست یا بے ہوش"}], "adult": [{"key": "severe_breathlessness", "id": "DS-AD-01", "en": "Severe breathlessness", "ur": "سانس لینے میں شدید مشکل"}, {"key": "cannot_speak", "id": "DS-AD-02", "en": "Cannot speak full sentences", "ur": "پورا جملہ نہیں بول سکتا"}, {"key": "confusion", "id": "DS-AD-03", "en": "Confusion", "ur": "ذہنی الجھن"}, {"key": "chest_pain", "id": "DS-AD-04", "en": "Chest pain", "ur": "سینے میں درد"}, {"key": "fainting", "id": "DS-AD-05", "en": "Fainting", "ur": "بے ہوشی"}, {"key": "blue_lips", "id": "DS-AD-06", "en": "Blue lips", "ur": "نیلے ہونٹ"}, {"key": "convulsions", "id": "DS-AD-07", "en": "Fits", "ur": "دورے"}, {"key": "heavy_bleeding", "id": "DS-AD-08", "en": "Heavy bleeding", "ur": "بہت خون بہنا"}, {"key": "shock", "id": "DS-AD-09", "en": "Signs of shock", "ur": "صدمے کی علامات"}], "maternal": [{"key": "vaginal_bleeding", "id": "DS-PG-01", "en": "Vaginal bleeding", "ur": "اندام نہانی سے خون"}, {"key": "severe_headache_blurred_vision", "id": "DS-PG-02", "en": "Severe headache with blurred vision", "ur": "شدید سر درد اور دھندلا نظر آنا"}, {"key": "convulsions", "id": "DS-PG-03", "en": "Fits", "ur": "دورے"}, {"key": "reduced_fetal_movement", "id": "DS-PG-04", "en": "Reduced fetal movement", "ur": "بچے کی حرکت کم"}, {"key": "fever", "id": "DS-PG-05", "en": "Fever", "ur": "بخار"}, {"key": "leaking_fluid", "id": "DS-PG-06", "en": "Leaking fluid", "ur": "پانی بہنا"}]}, "thresholds": {"spo2_red": 90, "rr_infant": 60, "rr_2_11_months": 50, "rr_12_59_months": 40, "rr_adult": 30, "infant_fever": 38, "infant_low_temperature": 35.5, "child_indrawing_level": "RED", "tb_cough_days": 14, "fever_days": 7, "diarrhoea_days": 14, "muac_min_age_days": 183, "muac_red_flag": 11.5, "crb_systolic": 90, "crb_diastolic": 60, "crb_age_days": 23741, "crb_red_score": 3}, "routing": {"escalation_minutes": 10, "escalation_by_urgency": {"RED": [10, 20, 30], "AMBER": [10, 20, 30], "GREEN": [10, 20, 30]}, "followup_hours": 48, "targets": {"RED": "Immediate review; do not delay emergency referral", "AMBER": "Within the hour", "GREEN": "Same day"}}};
+
+const $=id=>document.getElementById(id);let memory={};try{memory=JSON.parse(localStorage.getItem('smartsehat-offline')||'{}');}catch(e){}
+for(const id of ['name','age','unit','cough','spo2','resp_rate','weight','reason'])if(memory[id]!=null)$(id).value=memory[id];$('pregnant').checked=!!memory.pregnant;
+let age,facts,result,groupKey='';
+function recalculate(){
+ let value=Number($('age').value),unit=$('unit').value;if(!Number.isFinite(value)||value<0)return;
+ const factors={days:1,weeks:7,months:config.age.days_per_month,years:config.age.days_per_year};let days=Math.round(value*factors[unit]);
+ age={value,unit,days,pathway:days<config.age.infant_days?'young_infant':days<config.age.child_days?'child':days<Math.round(config.age.older_child_years*config.age.days_per_year)?'older_child':days>=config.thresholds.crb_age_days?'older_adult':'adult'};
+ const group=['young_infant','child','older_child'].includes(age.pathway)?'child':'adult',pregnant=$('pregnant').checked;
+ const key=group+pregnant;if(groupKey!==key){groupKey=key;$('danger').replaceChildren();const qs=Object.values(Object.fromEntries([...config.danger_signs[group],...(pregnant?config.danger_signs.maternal:[])].map(q=>[q.key,q])));for(const q of qs){let label=document.createElement('label');label.textContent=q.en+' / '+q.ur;let select=document.createElement('select');select.dataset.fact=q.key;for(const [value,text]of [['','Unknown'],['false','No'],['true','Yes']]){let o=document.createElement('option');o.value=value;o.textContent=text;select.append(o);}if(memory[q.key]!=null)select.value=memory[q.key];select.onchange=recalculate;label.append(select);$('danger').append(label);}}
+ facts=[{id:'F1',key:'age',value:age,confirmed:true,source:'worker'}];let i=2;
+ for(const select of document.querySelectorAll('[data-fact]')){memory[select.dataset.fact]=select.value;if(select.value!=='')facts.push({id:'F'+i++,key:select.dataset.fact,value:select.value==='true',confirmed:true,source:'worker'});}
+ if($('cough').value!=='')facts.push({id:'F'+i++,key:'cough',value:$('cough').value==='true',confirmed:true,source:'worker'});
+ let invalid=false;
+ for(const key of ['spo2','resp_rate','weight']){const raw=$(key).value,spec=config.measurements[key];if(raw!==''){const value=Number(raw);if(!Number.isFinite(value)||value<spec.min||value>spec.max){invalid=true;continue;}facts.push({id:'F'+i++,key,value,unit:spec.unit,confirmed:true,source:'device'});}}
+ result=evaluateConsultation(facts,age,pregnant,config);$('banner').className=result.level;$('banner').textContent=result.level+' · '+age.pathway;
+ $('details').textContent=(invalid?'Invalid measurement rejected. ':'')+result.fired.map(r=>r.rule_id+': '+r.text).join(' | ');$('emergency').hidden=result.level!=='RED';
+ for(const id of ['name','age','unit','cough','spo2','resp_rate','weight','reason'])memory[id]=$(id).value;memory.pregnant=pregnant;try{localStorage.setItem('smartsehat-offline',JSON.stringify(memory));}catch(e){$('status').textContent='Browser storage unavailable; export before closing.';}
+}
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',recalculate));recalculate();
+$('export').onclick=()=>{recalculate();const data={format:'smartsehat-offline-1',synthetic:true,name:$('name').value,age,pregnant:$('pregnant').checked,facts,reason_missing:$('reason').value,urgency:result};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='smartsehat-offline-case.json';a.click();URL.revokeObjectURL(a.href);};
+</script></html>

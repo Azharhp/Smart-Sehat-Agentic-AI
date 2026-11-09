@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{font:18px system-ui;color:#163a42;margin:12px}button{font:inherit;min-height:52px;padding:12px 22px;border-radius:12px;border:1px solid #137c83;background:#effafa;margin:4px;cursor:pointer}#tap{font-size:26px;width:96%;background:#087d82;color:white;height:82px}#count{font-size:42px;font-weight:bold}#warning{color:#ad2020;font-weight:bold}</style>
+<div aria-live="polite"><span id="time">60</span> seconds remaining · <span id="count">0</span> breaths</div>
+<div id="threshold"></div><button id="start">Start full minute</button><button id="reset">Reset</button>
+<button id="tap" disabled>Tap for each breath</button><p id="warning" role="alert"></p><p id="status">Count while the patient is calm. Save only a completed minute.</p>
+<script>
+const send=(type,data={})=>parent.postMessage({isStreamlitMessage:true,type,...data},'*');
+let count=0,end=0,timer=null,threshold=null,caseId='',done=false;
+const $=id=>document.getElementById(id);
+function render(){let left=end?Math.max(0,Math.ceil((end-Date.now())/1000)):60;$('time').textContent=left;$('count').textContent=count;
+ $('warning').textContent=threshold&&count>=threshold?'Configured fast-breathing threshold reached.':'';
+ if(end&&left===0&&!done){done=true;clearInterval(timer);$('tap').disabled=true;$('status').textContent='Full minute complete: '+count+' breaths/min. Confirm this measurement below.';send('streamlit:setComponentValue',{value:{count,complete:true,duration_seconds:60,case_id:caseId}});}}
+window.addEventListener('message',e=>{if(e.data.type==='streamlit:render'){threshold=e.data.args.threshold;caseId=e.data.args.case_id;$('threshold').textContent=threshold?'Configured fast breathing: '+threshold+' /min (clinical review pending)':'Record a full minute for doctor review.';}});
+$('start').onclick=()=>{clearInterval(timer);count=0;done=false;end=Date.now()+60000;$('tap').disabled=false;$('status').textContent='Count every breath for the full minute.';timer=setInterval(render,150);render();};
+$('tap').onclick=()=>{if(end&&Date.now()<end){count++;render();}};
+$('reset').onclick=()=>{clearInterval(timer);end=0;count=0;done=false;$('tap').disabled=true;send('streamlit:setComponentValue',{value:null});render();};
+send('streamlit:componentReady',{apiVersion:1});send('streamlit:setFrameHeight',{height:290});
+</script></html>

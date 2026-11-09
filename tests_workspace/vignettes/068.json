@@ -1,0 +1,65 @@
+{
+  "name": "generic-14",
+  "age": {
+    "value": 14,
+    "unit": "years",
+    "days": 5114,
+    "display": "14 years = 14 years 0 months (5114 days)",
+    "warning": "",
+    "pathway": "older_child"
+  },
+  "facts": [
+    {
+      "id": "F1",
+      "key": "cannot_drink",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F2",
+      "key": "vomits_everything",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F3",
+      "key": "convulsions",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F4",
+      "key": "lethargic",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F5",
+      "key": "fever",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F6",
+      "key": "cough",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    }
+  ],
+  "pregnant": false,
+  "expected_urgency": "GREEN",
+  "expected_rule_ids": [],
+  "synthetic": true
+}

@@ -1,0 +1,57 @@
+version: consultation-2
+review_status: pending
+# Doctor-facing hypotheses, never a diagnosis, probability or treatment instruction.
+# Priority below orders the display only. No model or catalogue can lower urgency.
+items:
+  - id: respiratory_infection
+    title: Lower respiratory infection consideration
+    trigger_any: [cough, breathlessness]
+    supporting: [cough, fever, breathlessness, chest_indrawing, stridor]
+    against: [fever, chest_indrawing, stridor]
+    measurements: [resp_rate, spo2, temperature]
+    missing: [resp_rate, spo2, temperature, chest_indrawing]
+    separating_test: Doctor chest examination and oxygen assessment; imaging if the doctor considers it necessary
+    priority: 70
+    reference_terms: [pneumonia, child]
+  - id: viral_respiratory
+    title: Viral respiratory illness consideration
+    trigger_any: [cough]
+    supporting: [cough, runny_nose, sick_contact, sore_throat]
+    against: [runny_nose, sick_contact]
+    measurements: [temperature, spo2]
+    missing: [runny_nose, sick_contact, resp_rate, spo2]
+    separating_test: Doctor reviews the clinical pattern and danger signs; no automatic antibiotic decision
+    priority: 45
+    reference_terms: [cough]
+  - id: tuberculosis
+    title: Tuberculosis screening consideration
+    trigger_any: [cough]
+    minimum_duration_key: cough_days
+    duration_threshold_config: tb_cough_days
+    supporting: [weight_loss, night_sweats, haemoptysis, tb_contact, diabetes, previous_tb]
+    against: [weight_loss, night_sweats, haemoptysis, tb_contact]
+    measurements: [cough_days, weight]
+    missing: [cough_days, weight_loss, night_sweats, tb_contact]
+    separating_test: Doctor reviews need for sputum testing through the TB programme
+    priority: 80
+    reference_terms: [tb]
+  - id: wheeze
+    title: Asthma or other airway disease consideration
+    trigger_any: [wheeze, recurrent_wheeze]
+    supporting: [wheeze, recurrent_wheeze, night_cough, asthma_history, smoke_exposure]
+    against: [recurrent_wheeze, asthma_history, smoke_exposure]
+    measurements: [resp_rate, spo2]
+    missing: [recurrent_wheeze, night_cough, asthma_history, smoke_exposure, spo2]
+    separating_test: Doctor airway examination and assessment appropriate to age
+    priority: 60
+    reference_terms: [breathlessness]
+  - id: febrile_illness
+    title: Febrile illness consideration
+    trigger_any: [fever]
+    supporting: [fever, rash, bleeding, neck_stiffness, persistent_vomiting, abdominal_pain]
+    against: [rash, bleeding, neck_stiffness, persistent_vomiting]
+    measurements: [fever_days, temperature, malaria_rdt, glucose]
+    missing: [fever_days, temperature, neck_stiffness, rash, bleeding]
+    separating_test: Doctor chooses testing using examination, exposure and local epidemiology
+    priority: 50
+    reference_terms: [fever]

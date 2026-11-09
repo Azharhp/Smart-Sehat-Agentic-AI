@@ -1,0 +1,12 @@
+review_status: pending
+questions:
+  - {id: Q39, asks_key: chief_complaint, text_en: 'What is the main concern today?', text_ur: 'آج اصل تکلیف کیا ہے؟', trigger: always, kind: text, priority: 100, why_ur: 'مریض کی اپنی بات ڈاکٹر تک پہنچانے کے لیے۔'}
+  - {id: Q40, asks_key: symptom_onset, text_en: 'When did the symptoms first start?', text_ur: 'علامات پہلی بار کب شروع ہوئیں؟', trigger: always, kind: text, priority: 39, why_ur: 'آغاز کا وقت بیماری کی مدت سمجھنے میں مدد دیتا ہے۔'}
+  - {id: Q41, asks_key: symptom_course, text_en: 'Are the symptoms improving, unchanged or worsening?', text_ur: 'تکلیف کم، ویسی ہی، یا زیادہ ہو رہی ہے؟', trigger: always, kind: choice, choices: [improving, unchanged, worsening], priority: 38, why_ur: 'بگڑتی حالت ڈاکٹر کو جلد بتانا ضروری ہے۔'}
+  - {id: Q42, asks_key: symptom_severity, text_en: 'How does the patient describe the severity?', text_ur: 'مریض تکلیف کی شدت کیسے بتاتا ہے؟', trigger: always, kind: choice, choices: [mild, moderate, severe, unknown], priority: 37, why_ur: 'یہ مریض کی بتائی ہوئی شدت ہے، خودکار تشخیص نہیں۔'}
+  - {id: Q43, asks_key: runny_nose, text_en: 'Is there a runny or blocked nose?', text_ur: 'کیا ناک بہتی یا بند ہے؟', trigger: respiratory, kind: bool, priority: 12, why_ur: 'سانس کی دوسری علامات کے ساتھ مکمل تصویر بنانے کے لیے۔'}
+  - {id: Q44, asks_key: sore_throat, text_en: 'Is there a sore throat?', text_ur: 'کیا گلے میں درد ہے؟', trigger: respiratory, kind: bool, priority: 11, why_ur: 'گلے اور سانس کی علامات میں فرق سمجھنے کے لیے۔'}
+  - {id: Q45, asks_key: diarrhoea_days, text_en: 'For how many days has there been diarrhoea?', text_ur: 'دست کتنے دن سے ہیں؟', trigger: diarrhoea, kind: number, priority: 30, why_ur: 'لمبے عرصے کے دست ڈاکٹر کو بتانے کے لیے۔'}
+  - {id: Q46, asks_key: blood_in_stool, text_en: 'Is there blood in the stool?', text_ur: 'کیا پاخانے میں خون ہے؟', trigger: diarrhoea, kind: bool, priority: 29, why_ur: 'یہ اہم علامت ڈاکٹر کے جائزے میں مدد دیتی ہے۔'}
+  - {id: Q47, asks_key: dehydration, text_en: 'Are there observed signs of dehydration?', text_ur: 'کیا پانی کی کمی کی علامات ہیں؟', trigger: diarrhoea, kind: bool, priority: 28, why_ur: 'پانی پینے، پیشاب اور ظاہری حالت کی معلومات کے ساتھ ڈاکٹر کو بتائیں۔'}
+  - {id: Q48, asks_key: exposure_history, text_en: 'Any travel, local outbreak, animal or occupational exposure?', text_ur: 'کیا سفر، مقامی وبا، جانوروں یا کام کی جگہ سے کوئی تعلق ہے؟', trigger: fever, kind: text, priority: 7, why_ur: 'مقامی حالات کے مطابق ٹیسٹ ڈاکٹر منتخب کرتا ہے۔'}

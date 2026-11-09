@@ -11,6 +11,7 @@ jobs:
       SMARTSEHAT_OFFLINE: "1"
       SMARTSEHAT_MODE: stub
       DOTENV_DISABLED: "1"
+      CONSULTATION_DISABLE_SCHEDULER: "1"
       PYTHONDONTWRITEBYTECODE: "1"
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +21,14 @@ jobs:
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -r requirements.txt
-      - run: python -m unittest discover -v
+      - run: python -m unittest discover -s tests -v
+      - run: python -m unittest discover -s tests_workspace -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: node tests_workspace/browser_components.cjs
+      - run: node tests_workspace/danger_component.cjs
+      - run: node tests_workspace/speech_component.cjs
       - run: python test_flow.py
       - run: python test_dawa.py
       - run: python -m compileall -q smartsehat tests test_flow.py test_dawa.py test_real.py test_qwen_asr.py demo_medication_review.py

@@ -1,0 +1,68 @@
+{
+  "synthetic": true,
+  "purpose": "Fictional presentation role-play only. These are authored examples, not clinically reviewed patient prescriptions.",
+  "medicine_reference": "https://www.nhs.uk/medicines/paracetamol-for-adults/",
+  "common_answers": {
+    "cough": true, "breathlessness": false, "fever": false, "cough_days": 2,
+    "chest_indrawing": false, "stridor": false, "wheeze": false,
+    "vomiting": false, "diarrhoea": false, "convulsions": false, "rash": false,
+    "drinking": true, "urine_reduced": false, "neck_stiffness": false,
+    "bleeding": false, "persistent_vomiting": false, "abdominal_pain": false,
+    "haemoptysis": false, "weight_loss": false, "night_sweats": false,
+    "tb_contact": false, "diabetes": false, "previous_tb": false,
+    "recurrent_wheeze": false, "night_cough": false, "asthma_history": false,
+    "smoke_exposure": false, "sick_contact": true,
+    "immunisation_complete": true, "premature_birth": false, "past_admission": false,
+    "allergy_penicillin": false, "allergies": "None reported, including no known paracetamol allergy.",
+    "chronic_conditions": "None reported. No known liver or kidney disease.",
+    "breastfeeding": false, "medicine_history": "No medicines, herbal remedies or cold-and-flu products taken for this illness.",
+    "runny_nose": true, "sore_throat": true,
+    "exposure_history": "No recent travel or known outbreak, animal or occupational exposure reported."
+  },
+  "cases": [
+    {
+      "key": "emergency", "title": "Emergency: Ayaan needs referral", "name": "Ayaan - full emergency example (fictional)",
+      "age_value": 14, "age_unit": "months", "sex": "Male", "language": "English", "village": "Synthetic village A",
+      "story": "Cough for 4 days. Fever for 2 days. No vomiting. No diarrhoea. No wheeze. He is drinking normally. His caregiver says he is breathing faster today.",
+      "answers": {
+        "chief_complaint": "Cough and fever; caregiver reports faster breathing today.",
+        "symptom_onset": "Cough started 4 days ago; fever started 2 days ago.",
+        "symptom_course": "worsening", "symptom_severity": "moderate",
+        "cough_days": 4, "fever": true, "fever_days": 2, "breathlessness": true,
+        "sore_throat": false,
+        "worker_request": "Please review the child's breathing and measurements, and advise whether urgent referral is needed."
+      },
+      "measurements": {"temperature": 38, "spo2": 94, "pulse": 120, "resp_rate": 46, "systolic": 100, "diastolic": 65, "weight": 10, "muac": 14},
+      "initial_urgency": "AMBER", "task_result": 89,
+      "advice": "FICTIONAL ROLE-PLAY: The newly returned oxygen reading is 89%. Arrange urgent transfer to the selected referral facility now; do not delay transfer to finish paperwork or give a routine medicine demonstration. Follow the local emergency protocol and contact the receiving clinical team.",
+      "diagnosis": "Fictional doctor assessment: respiratory illness with a low oxygen reading; urgent in-person assessment required. Cause not established by this prototype.",
+      "return_if": "This is already the emergency pathway: proceed with the urgent referral. Report any further worsening immediately to the receiving care team.",
+      "counselling": "Explain that the oxygen reading has worsened and urgent assessment is needed. Ask the caregiver to repeat the destination and immediate next action. Tell them the on-screen pre-alert is simulated in this demonstration.",
+      "referral": "Synthetic THQ hospital", "capability": "oxygen",
+      "followup": {"condition": "same", "drinking": "normal", "attended": "Yes", "new_danger": "No", "outcome": "admitted"}
+    },
+    {
+      "key": "routine", "title": "Routine: Sara receives a doctor prescription", "name": "Sara - full routine example (fictional)",
+      "age_value": 28, "age_unit": "years", "sex": "Female", "language": "English", "village": "Synthetic village B",
+      "story": "Cough for 2 days. No fever. No breathlessness. No vomiting. No diarrhoea. No wheeze. My nose is runny, my throat is sore and I have mild body aches. I am eating and drinking normally.",
+      "answers": {
+        "chief_complaint": "Mild cough, runny nose, sore throat and body aches.",
+        "symptom_onset": "Symptoms started 2 days ago.", "symptom_course": "unchanged", "symptom_severity": "mild",
+        "chronic_conditions": "None reported. No known liver or kidney disease. No alcohol dependence or binge drinking reported.",
+        "worker_request": "Please review the symptoms and normal measurements, and provide symptom-relief advice and return precautions."
+      },
+      "measurements": {"temperature": 36.8, "spo2": 98, "pulse": 78, "resp_rate": 16, "systolic": 118, "diastolic": 76, "weight": 60, "muac": null},
+      "initial_urgency": "GREEN", "task_result": 98,
+      "advice": "FICTIONAL ROLE-PLAY: The history and repeat measurements do not show a configured emergency warning in this example. Use the written symptom-relief prescription only if needed for the reported aches or sore throat, rest, and drink fluids normally. Seek reassessment if symptoms worsen or do not improve. This is a fictional doctor's entered plan; the app did not diagnose or select the dose.",
+      "diagnosis": "Fictional doctor impression: mild upper-respiratory symptoms; no definitive diagnosis established by the prototype.",
+      "medicine": "Paracetamol", "formulation": "tablet", "strength": "500 mg", "route": "oral", "dose_mg": 500,
+      "doses_per_day": 4, "duration_days": 1, "indication": "Body aches or sore-throat pain", "as_needed": true,
+      "prescription": "FICTIONAL ROLE-PLAY ONLY: Paracetamol 500 mg tablet: take ONE tablet by mouth only if needed for aches or sore-throat pain. Leave at least 6 hours between doses. Maximum FOUR tablets (2,000 mg) in any 24 hours for this one-day example. Do not take another product containing paracetamol. Stop when the pain settles. Seek clinical review if symptoms persist or worsen. This example is not a prescription for a real person.",
+      "feeding": "Drink fluids normally and eat as tolerated in this fictional example.",
+      "return_if": "Seek urgent assessment for new breathing difficulty, chest pain, confusion, fainting, blue lips, inability to drink, or rapid worsening. Seek clinical reassessment if symptoms persist or worsen.",
+      "counselling": "Explain the one-tablet amount, six-hour minimum gap, maximum four tablets in 24 hours, one-day example duration, only-when-needed instruction, and avoiding duplicate paracetamol products. Ask Sara to repeat these instructions and the warning signs. Explain that the app's dose validation remains unavailable.",
+      "referral": "None", "capability": "No referral",
+      "followup": {"condition": "better", "drinking": "normal", "attended": "Unknown", "new_danger": "No", "outcome": "recovered"}
+    }
+  ]
+}

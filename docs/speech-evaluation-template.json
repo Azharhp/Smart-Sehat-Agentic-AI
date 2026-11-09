@@ -1,0 +1,262 @@
+{
+  "instructions": "Use consented/pseudonymised recordings and a real bilingual reviewer. Fill references independently of model hypotheses. Include negatives, duration, numbers/units, medicine names and code-switching. Record actual device/noise/network and end-to-end latency. An empty template is not an evaluation.",
+  "dataset_template": {
+    "format": "smartsehat-speech-evaluation-1",
+    "samples": []
+  },
+  "schema": {
+    "$defs": {
+      "FactLabel": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Unit"
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ],
+        "title": "FactLabel",
+        "type": "object"
+      },
+      "SpeechSample": {
+        "additionalProperties": false,
+        "properties": {
+          "sample_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Sample Id",
+            "type": "string"
+          },
+          "language": {
+            "enum": [
+              "Urdu",
+              "English",
+              "Sindhi",
+              "Punjabi",
+              "Pashto",
+              "Saraiki",
+              "Balochi"
+            ],
+            "title": "Language",
+            "type": "string"
+          },
+          "dialect": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Dialect",
+            "type": "string"
+          },
+          "recording_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Recording Sha256",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "synthetic",
+              "consented-speaker"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "speaker_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Speaker Id",
+            "type": "string"
+          },
+          "consent_recorded": {
+            "title": "Consent Recorded",
+            "type": "boolean"
+          },
+          "consent_reference": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Consent Reference"
+          },
+          "reference_reviewer": {
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Reference Reviewer",
+            "type": "string"
+          },
+          "reference_checked_against_audio": {
+            "title": "Reference Checked Against Audio",
+            "type": "boolean"
+          },
+          "reviewed_on": {
+            "format": "date",
+            "title": "Reviewed On",
+            "type": "string"
+          },
+          "reference_transcript": {
+            "maxLength": 30000,
+            "minLength": 1,
+            "title": "Reference Transcript",
+            "type": "string"
+          },
+          "hypothesis_transcript": {
+            "maxLength": 30000,
+            "title": "Hypothesis Transcript",
+            "type": "string"
+          },
+          "provider": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Provider",
+            "type": "string"
+          },
+          "model": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          },
+          "device": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Device",
+            "type": "string"
+          },
+          "noise": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Noise",
+            "type": "string"
+          },
+          "network": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Network",
+            "type": "string"
+          },
+          "latency_ms": {
+            "maximum": 3600000,
+            "minimum": 0,
+            "title": "Latency Ms",
+            "type": "number"
+          },
+          "facts_annotated": {
+            "default": false,
+            "title": "Facts Annotated",
+            "type": "boolean"
+          },
+          "reference_facts": {
+            "items": {
+              "$ref": "#/$defs/FactLabel"
+            },
+            "maxItems": 200,
+            "title": "Reference Facts",
+            "type": "array"
+          },
+          "proposed_facts": {
+            "items": {
+              "$ref": "#/$defs/FactLabel"
+            },
+            "maxItems": 200,
+            "title": "Proposed Facts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "sample_id",
+          "language",
+          "dialect",
+          "recording_sha256",
+          "source",
+          "speaker_id",
+          "consent_recorded",
+          "reference_reviewer",
+          "reference_checked_against_audio",
+          "reviewed_on",
+          "reference_transcript",
+          "hypothesis_transcript",
+          "provider",
+          "model",
+          "device",
+          "noise",
+          "network",
+          "latency_ms"
+        ],
+        "title": "SpeechSample",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "format": {
+        "const": "smartsehat-speech-evaluation-1",
+        "title": "Format",
+        "type": "string"
+      },
+      "samples": {
+        "items": {
+          "$ref": "#/$defs/SpeechSample"
+        },
+        "maxItems": 100,
+        "minItems": 1,
+        "title": "Samples",
+        "type": "array"
+      }
+    },
+    "required": [
+      "format",
+      "samples"
+    ],
+    "title": "SpeechDataset",
+    "type": "object"
+  },
+  "languages": [
+    "Urdu",
+    "English",
+    "Sindhi",
+    "Punjabi",
+    "Pashto",
+    "Saraiki",
+    "Balochi"
+  ],
+  "review_status": "Pending real language/device data"
+}

@@ -1,0 +1,131 @@
+{
+  "name": "DS-PG-06",
+  "age": {
+    "value": 25,
+    "unit": "years",
+    "days": 9131,
+    "display": "25 years = 25 years 0 months (9131 days)",
+    "warning": "",
+    "pathway": "adult"
+  },
+  "facts": [
+    {
+      "id": "F1",
+      "key": "severe_breathlessness",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F2",
+      "key": "cannot_speak",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F3",
+      "key": "confusion",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F4",
+      "key": "chest_pain",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F5",
+      "key": "fainting",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F6",
+      "key": "blue_lips",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F7",
+      "key": "convulsions",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F8",
+      "key": "heavy_bleeding",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F9",
+      "key": "shock",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F10",
+      "key": "vaginal_bleeding",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F11",
+      "key": "severe_headache_blurred_vision",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F12",
+      "key": "reduced_fetal_movement",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F13",
+      "key": "fever",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F14",
+      "key": "leaking_fluid",
+      "value": true,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    }
+  ],
+  "pregnant": true,
+  "expected_urgency": "RED",
+  "expected_rule_ids": [
+    "DS-PG-06"
+  ],
+  "synthetic": true
+}

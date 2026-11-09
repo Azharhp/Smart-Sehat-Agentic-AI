@@ -1,0 +1,25 @@
+agents: stub   # stub | real   (switch; stub keeps everything offline)
+role_routes:
+  stt: [aihubmix/gemini-3.8-flash-free, tokenharbor/mimo-v2.5:free, qwen/qwen3-asr-flash, groq/whisper-large-v3]
+  vision_rx: [qwen/qwen3-vl-plus, gemini/gemini-3.6-flash, aihubmix/gemini-3.8-flash-free]
+  vision_xray: [qwen/qwen3-vl-plus, gemini/gemini-3.6-flash, aihubmix/gemini-3.8-flash-free]
+  reasoning: [groq/gpt-oss-120b, qwen/qwen3-max, gemini/gemini-3.6-flash, aihubmix/gemini-3.8-flash-free]
+endpoints:
+  qwen: "https://ws-ah8evok5ajq7vsm0.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+  qwen_asr: "https://ws-ah8evok5ajq7vsm0.ap-southeast-1.maas.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation"
+asr:
+  qwen_model: "qwen3-asr-flash"
+keys_env: [GROQ_API_KEY, GOOGLE_API_KEY, DASHSCOPE_API_KEY, AIHUBMIX_API_KEY, TOKENHARBOR_API_KEY]
+allowlist_medicines:
+  - paracetamol
+  - amoxicillin
+  - artemether
+  - lumefantrine
+  - azithromycin
+  - ORS
+  - rifampicin
+  - isoniazid
+  - pyrazinamide
+  - ethambutol
+  - omeprazole
+  - metformin

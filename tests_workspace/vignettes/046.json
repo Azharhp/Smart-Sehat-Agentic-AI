@@ -1,0 +1,91 @@
+{
+  "name": "DS-AD-02",
+  "age": {
+    "value": 30,
+    "unit": "years",
+    "days": 10958,
+    "display": "30 years = 30 years 0 months (10958 days)",
+    "warning": "",
+    "pathway": "adult"
+  },
+  "facts": [
+    {
+      "id": "F1",
+      "key": "severe_breathlessness",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F2",
+      "key": "cannot_speak",
+      "value": true,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F3",
+      "key": "confusion",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F4",
+      "key": "chest_pain",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F5",
+      "key": "fainting",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F6",
+      "key": "blue_lips",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F7",
+      "key": "convulsions",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F8",
+      "key": "heavy_bleeding",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    },
+    {
+      "id": "F9",
+      "key": "shock",
+      "value": false,
+      "confirmed": true,
+      "unit": null,
+      "source": "worker"
+    }
+  ],
+  "pregnant": false,
+  "expected_urgency": "RED",
+  "expected_rule_ids": [
+    "DS-AD-02"
+  ],
+  "synthetic": true
+}
