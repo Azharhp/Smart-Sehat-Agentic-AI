@@ -11,3 +11,10 @@ This is a maintenance plan, not a promise of deployment readiness or a dated del
 6. **Reusable infrastructure:** assess extraction of audit/task orchestration into a separately testable nonclinical Python package after interfaces stabilize.
 
 Track concrete work with issues containing acceptance criteria and genuine results. Do not represent authored synthetic tests as external usage or clinical outcomes.
+
+## Tracked work
+
+- [Workspace security integration](https://github.com/Azharhp/Smart-Sehat-Agentic-AI/issues/2)
+- [Clean installation and dependencies](https://github.com/Azharhp/Smart-Sehat-Agentic-AI/issues/3)
+- [Keyboard and bilingual accessibility](https://github.com/Azharhp/Smart-Sehat-Agentic-AI/issues/4)
+- [Clinical corpus and fixture rights audit](https://github.com/Azharhp/Smart-Sehat-Agentic-AI/issues/5)

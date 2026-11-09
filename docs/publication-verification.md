@@ -11,3 +11,7 @@ Executed in the isolated publication copy using the existing Windows Python 3.14
 - Credential-pattern scan found no matching files in the prepared source allowlist. Uploads, databases, keys, encrypted caches and local build outputs are excluded.
 
 These are software regression results, not clinical validation. Clean dependency resolution and a new remote CI run require separate verification. Upstream safety modules/tests remain intact. The new workspace is a separate entry point; identity/access-control integration remains a roadmap item. No real-world outcomes or adoption are claimed.
+
+## GitHub Actions verification
+
+[Run 42601033925](https://github.com/Azharhp/Smart-Sehat-Agentic-AI/actions/runs/42601033925) passed on Ubuntu with Python 3.12, including clean dependency installation, both Python suites (326 tests total), legacy scripts, medication examples and the three Node component checks. GitHub private vulnerability reporting was enabled for the repository.
